@@ -2,6 +2,10 @@
 
 A semantic context layer for agent workflows
 
+<p align="center">
+  <img src="https://gifdb.com/images/high/tesseract-474-x-498-gif-4np9yatx7901hbq0.gif" width="40%" />
+</p>
+
 ---
 
 ## Overview
