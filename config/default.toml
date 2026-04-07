@@ -1,0 +1,7 @@
+[retrieval]
+semantic_top_k = 20
+max_l2_distance = 0.75
+
+[storage]
+lancedb_file = "tesseract.lancedb"
+redb_file = "tesseract.redb"

@@ -4,5 +4,17 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+arrow-array = "57.3.0"
+arrow-buffer = "57.3.0"
+arrow-schema = "57.3.0"
+dirs = "6.0.0"
 fastembed = "5"
+futures-util = "0.3.32"
+lancedb = "0.27.2"
 ort = { version = "2.0.0-rc.11", default-features = false, features = ["load-dynamic"] }
+redb = "4.0.0"
+serde = "1.0.228"
+serde_json = "1.0.149"
+tokio = "1.51.0"
+toml = "1.1.2"
+uuid = { version = "1", features = ["v4"] }
