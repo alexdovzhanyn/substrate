@@ -45,6 +45,35 @@ Tesseract replaces this with a structured system where context can be:
 
 ---
 
+## Setup
+
+Tesseract relies on a local embedding model. Models are not included in the repository due to size constraints.
+
+First, install the Hugging Face CLI:
+
+```bash
+brew install hf
+```
+
+Then download the model into the `models/` directory:
+
+```bash
+hf download BAAI/bge-small-en-v1.5 --local-dir models/bge-small-en-v1.5
+```
+
+After downloading, your directory should look like:
+
+```text
+models/
+  bge-small-en-v1.5/
+    config.json
+    tokenizer.json
+    model.safetensors
+    pytorch_model.bin
+    onnx/
+      model.onnx
+```
+
 ## Usage
 
 Start Tesseract:

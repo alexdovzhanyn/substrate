@@ -1,0 +1,7 @@
+[build]
+target = "x86_64-apple-darwin"
+
+[env]
+ORT_DYLIB_PATH = { value = "vendor/onnxruntime/build/MacOS/Release/libonnxruntime.1.26.0.dylib", relative = true }
+MACOSX_DEPLOYMENT_TARGET = "12.3"
+HF_HUB_OFFLINE = "1"
