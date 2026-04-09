@@ -4,4 +4,3 @@ mod reranker;
 
 pub use index::SemanticIndex;
 use reranker::Reranker;
-

@@ -8,41 +8,41 @@ use crate::util::{Config, get_storage_path};
 const BELIEF_TABLE: TableDefinition<&str, &[u8]> = TableDefinition::new("beliefs");
 
 pub struct BeliefStore {
-    connection: Database,
+  connection: Database,
 }
 
 impl BeliefStore {
-    pub fn initialize(config: &Config) -> AppResult<Self> {
-        let connection = Database::create(get_storage_path(&config.storage.redb_file))?;
+  pub fn initialize(config: &Config) -> AppResult<Self> {
+    let connection = Database::create(get_storage_path(&config.storage.redb_file))?;
 
-        Ok(Self { connection })
+    Ok(Self { connection })
+  }
+
+  pub fn insert(&self, belief: &Belief) -> AppResult<()> {
+    let serialized = serde_json::to_vec(belief)?;
+
+    let write_txn = self.connection.begin_write()?;
+
+    {
+      let mut table = write_txn.open_table(BELIEF_TABLE)?;
+      table.insert(belief.id.as_str(), serialized.as_slice())?;
     }
 
-    pub fn insert(&self, belief: &Belief) -> AppResult<()> {
-        let serialized = serde_json::to_vec(belief)?;
+    write_txn.commit()?;
 
-        let write_txn = self.connection.begin_write()?;
+    Ok(())
+  }
 
-        {
-            let mut table = write_txn.open_table(BELIEF_TABLE)?;
-            table.insert(belief.id.as_str(), serialized.as_slice())?;
-        }
+  pub fn get(&self, belief_id: &str) -> AppResult<Option<Belief>> {
+    let read_txn = self.connection.begin_read()?;
+    let table = read_txn.open_table(BELIEF_TABLE)?;
 
-        write_txn.commit()?;
+    let value = match table.get(belief_id)? {
+      Some(value) => value,
+      None => return Ok(None),
+    };
 
-        Ok(())
-    }
-
-    pub fn get(&self, belief_id: &str) -> AppResult<Option<Belief>> {
-        let read_txn = self.connection.begin_read()?;
-        let table = read_txn.open_table(BELIEF_TABLE)?;
-
-        let value = match table.get(belief_id)? {
-            Some(value) => value,
-            None => return Ok(None),
-        };
-
-        let belief: Belief = serde_json::from_slice(value.value())?;
-        Ok(Some(belief))
-    }
+    let belief: Belief = serde_json::from_slice(value.value())?;
+    Ok(Some(belief))
+  }
 }
