@@ -1,35 +1,36 @@
-mod semantic;
 mod beliefs;
-mod storage;
+mod error;
+mod semantic;
 mod util;
 
-use std::collections::HashMap;
 use std::io::{self, Write};
 
+use crate::error::AppResult;
+
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> AppResult<()> {
     println!("Tesseract starting...");
 
     let config = util::Config::load("config/default.toml")?;
 
-    let mut embedding_db = storage::embedding::EmbeddingDB::initialize(&config).await?;
-    let kv_store = storage::kv::KVStore::initialize(&config)?;
+    let mut semantic_index = semantic::SemanticIndex::initialize(&config).await?;
+    let belief_store = beliefs::BeliefStore::initialize(&config)?;
 
     loop {
         let action = prompt("[q]uery or [i]nsert? ")?;
 
         if action == "q" {
-            query_beliefs(&mut embedding_db, &kv_store).await?;
+            query_beliefs(&mut semantic_index, &belief_store).await?;
         } else {
-            create_belief(&mut embedding_db, &kv_store).await?;
+            create_belief(&mut semantic_index, &belief_store).await?;
         }
     }
 }
 
 async fn create_belief(
-    embedding_db: &mut storage::embedding::EmbeddingDB,
-    kv_store: &storage::kv::KVStore
-) -> Result<(), Box<dyn std::error::Error>> {
+    semantic_index: &mut semantic::SemanticIndex,
+    belief_store: &beliefs::BeliefStore,
+) -> AppResult<()> {
     println!("======== NEW BELIEF =========");
 
     let subject = prompt("Subject: ")?;
@@ -42,37 +43,27 @@ async fn create_belief(
         subject,
         value,
         tags: tags.split(',').map(|s| s.trim().to_string()).collect(),
-        possible_queries: possible_queries.split(',').map(|s| s.trim().to_string()).collect()
+        possible_queries: possible_queries
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .collect(),
     };
 
-    embedding_db.insert_embeddings(&belief).await?;
-    kv_store.insert_belief(&belief)?;
- 
+    semantic_index.insert_belief_embeddings(&belief).await?;
+    belief_store.insert(&belief)?;
+
     Ok(())
 }
 
 async fn query_beliefs(
-    embedding_db: &mut storage::embedding::EmbeddingDB,
-    kv_store: &storage::kv::KVStore
-) -> Result<(), Box<dyn std::error::Error>> {
+    semantic_index: &mut semantic::SemanticIndex,
+    belief_store: &beliefs::BeliefStore,
+) -> AppResult<()> {
     let prompt = prompt("Query: ")?;
 
-    let mut beliefs_by_id = HashMap::new(); 
-    for candidate in embedding_db.query_beliefs(prompt).await? {
-        if beliefs_by_id.contains_key(&candidate.belief_id) {
-            continue;
-        } 
+    let beliefs = semantic_index.query_beliefs(prompt, &belief_store).await?;
 
-        let Some(belief) = kv_store.get_belief(&candidate.belief_id)? else {
-            continue;
-        };
-
-        beliefs_by_id.insert(candidate.belief_id, belief);
-    }  
-
-    let unique_beliefs: Vec<beliefs::belief::Belief> = beliefs_by_id.into_values().collect(); 
-
-    println!("Results: {unique_beliefs:#?}");
+    println!("Results: {beliefs:#?}");
 
     Ok(())
 }

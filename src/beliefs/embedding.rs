@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use arrow_array::{
-    ArrayRef, FixedSizeListArray, Float32Array, LargeStringArray, RecordBatch,
-};
+use arrow_array::{ArrayRef, FixedSizeListArray, Float32Array, LargeStringArray, RecordBatch};
 use arrow_schema::{DataType, Field, Schema};
+
+use crate::error::AppResult;
 
 #[derive(Debug, Clone)]
 pub struct BeliefEmbeddingEntry {
@@ -11,7 +11,7 @@ pub struct BeliefEmbeddingEntry {
     pub entry_id: String,
     pub embedding_source: String,
     pub embedding_text: String,
-    pub vector: Vec<f32>
+    pub vector: Vec<f32>,
 }
 
 impl BeliefEmbeddingEntry {
@@ -32,7 +32,7 @@ impl BeliefEmbeddingEntry {
         ]))
     }
 
-    pub fn to_record_batch(entries: &[BeliefEmbeddingEntry]) -> Result<RecordBatch, Box<dyn std::error::Error>> {
+    pub fn to_record_batch(entries: &[BeliefEmbeddingEntry]) -> AppResult<RecordBatch> {
         const EMBEDDING_DIM: i32 = 384;
 
         for entry in entries {
@@ -50,19 +50,31 @@ impl BeliefEmbeddingEntry {
         let schema = Self::get_schema();
 
         let belief_id_array = Arc::new(LargeStringArray::from(
-            entries.iter().map(|e| e.belief_id.as_str()).collect::<Vec<_>>(),
+            entries
+                .iter()
+                .map(|e| e.belief_id.as_str())
+                .collect::<Vec<_>>(),
         )) as ArrayRef;
 
         let entry_id_array = Arc::new(LargeStringArray::from(
-            entries.iter().map(|e| e.entry_id.as_str()).collect::<Vec<_>>(),
+            entries
+                .iter()
+                .map(|e| e.entry_id.as_str())
+                .collect::<Vec<_>>(),
         )) as ArrayRef;
 
         let embedding_source_array = Arc::new(LargeStringArray::from(
-            entries.iter().map(|e| e.embedding_source.as_str()).collect::<Vec<_>>(),
+            entries
+                .iter()
+                .map(|e| e.embedding_source.as_str())
+                .collect::<Vec<_>>(),
         )) as ArrayRef;
 
         let embedding_text_array = Arc::new(LargeStringArray::from(
-            entries.iter().map(|e| e.embedding_text.as_str()).collect::<Vec<_>>(),
+            entries
+                .iter()
+                .map(|e| e.embedding_text.as_str())
+                .collect::<Vec<_>>(),
         )) as ArrayRef;
 
         let flat_vectors: Vec<f32> = entries

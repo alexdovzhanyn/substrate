@@ -59,10 +59,11 @@ First, install the Hugging Face CLI:
 brew install hf
 ```
 
-Then download the model into the `models/` directory:
+Then download the models into the `models/` directory:
 
 ```bash
 hf download BAAI/bge-small-en-v1.5 --local-dir models/bge-small-en-v1.5
+hf download BAAI/bge-reranker-base --local-dir models/bge-reranker-base
 ```
 
 After downloading, your directory should look like:

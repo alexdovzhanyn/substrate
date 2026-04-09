@@ -1,15 +1,17 @@
-use fastembed::{TextEmbedding, InitOptions, EmbeddingModel, Error};
+use fastembed::{EmbeddingModel, Error, InitOptions, TextEmbedding};
 
-pub struct Resolver {
-    model: TextEmbedding
+use crate::error::AppResult;
+
+pub struct EmbeddingResolver {
+    model: TextEmbedding,
 }
 
-impl Resolver {
-    pub fn initialize() -> Result<Self, Error> {
+impl EmbeddingResolver {
+    pub fn initialize() -> AppResult<Self> {
         let model = TextEmbedding::try_new(
             InitOptions::new(EmbeddingModel::BGESmallENV15)
                 .with_cache_dir(Self::get_model_path())
-                .with_show_download_progress(false)
+                .with_show_download_progress(false),
         )?;
 
         Ok(Self { model })
@@ -22,7 +24,7 @@ impl Resolver {
     }
 
     fn get_model_path() -> std::path::PathBuf {
-        let model_dir = "models/bge-small-en-v1.5".to_string(); 
+        let model_dir = "models/bge-small-en-v1.5".to_string();
 
         std::env::current_exe()
             .unwrap()
@@ -31,4 +33,3 @@ impl Resolver {
             .join(model_dir)
     }
 }
-

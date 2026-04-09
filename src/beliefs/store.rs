@@ -2,22 +2,23 @@ use redb::{Database, ReadableDatabase, TableDefinition};
 use serde_json;
 
 use crate::beliefs::belief::Belief;
-use crate::util::{get_storage_path, Config};
+use crate::error::AppResult;
+use crate::util::{Config, get_storage_path};
 
 const BELIEF_TABLE: TableDefinition<&str, &[u8]> = TableDefinition::new("beliefs");
 
-pub struct KVStore {
-    connection: Database
+pub struct BeliefStore {
+    connection: Database,
 }
 
-impl KVStore {
-    pub fn initialize(config: &Config) -> Result<Self, Box<dyn std::error::Error>> {
+impl BeliefStore {
+    pub fn initialize(config: &Config) -> AppResult<Self> {
         let connection = Database::create(get_storage_path(&config.storage.redb_file))?;
 
         Ok(Self { connection })
     }
 
-    pub fn insert_belief(&self, belief: &Belief) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn insert(&self, belief: &Belief) -> AppResult<()> {
         let serialized = serde_json::to_vec(belief)?;
 
         let write_txn = self.connection.begin_write()?;
@@ -32,13 +33,13 @@ impl KVStore {
         Ok(())
     }
 
-    pub fn get_belief(&self, belief_id: &str) -> Result<Option<Belief>, Box<dyn std::error::Error>> {
+    pub fn get(&self, belief_id: &str) -> AppResult<Option<Belief>> {
         let read_txn = self.connection.begin_read()?;
         let table = read_txn.open_table(BELIEF_TABLE)?;
 
         let value = match table.get(belief_id)? {
             Some(value) => value,
-            None => return Ok(None)
+            None => return Ok(None),
         };
 
         let belief: Belief = serde_json::from_slice(value.value())?;

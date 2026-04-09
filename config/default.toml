@@ -1,6 +1,7 @@
 [retrieval]
 semantic_top_k = 20
 max_l2_distance = 0.75
+min_reranker_score = 0.4
 
 [storage]
 lancedb_file = "tesseract.lancedb"
