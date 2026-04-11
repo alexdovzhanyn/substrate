@@ -140,10 +140,10 @@ A good Tesseract query should look like something that could reasonably appear i
 Choose `max_result_count` intentionally based on expected answer breadth.
 
 Use:
-- `1` for a single concrete fact
-- `2` for a fact with possible alternatives
-- `3–5` for a small set of conventions or related rules
-- `5–6` for broader but still focused pattern queries
+- `1-3` for a single concrete fact 
+- `3-5` for a fact with possible alternatives
+- `5-8` for a small set of conventions or related rules
+- `8-10` for broader but still focused pattern queries
 
 Do NOT default to `5` automatically.
 Do NOT increase it just because you are uncertain.
@@ -160,12 +160,12 @@ Use this tool to answer one concrete question from Tesseract.
 
 Fields:
 - `query`: the single question you want answered
-- `other_phrasings`: alternate phrasings of the same exact question
+- `paraphrases`: alternate phrasings of the same exact question
 - `max_result_count`: the number of beliefs you expect to be relevant
 
 Requirements:
 - `query` must represent exactly one information need
-- `other_phrasings` must be near-paraphrases only
+- `paraphrases` must be near-paraphrases only
 - all query text must be context-independent and explicit
 - if you need multiple different answers, make multiple tool calls
 

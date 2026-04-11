@@ -171,9 +171,8 @@ impl SemanticIndex {
 
     let beliefs = candidates.iter().take(max_results).cloned().collect();
 
-    debug!("[SemanticIndex] Query: {query:?}");
+    debug!("[SemanticIndex] Query [LIMIT {max_results}]: {query:?}");
     debug!("[SemanticIndex] Results: {beliefs:?}");
-    debug!("[SemanticIndex] Limited to: {max_results:?}");
 
     Ok(beliefs)
   }
