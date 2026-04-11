@@ -9,3 +9,6 @@ redb_file = "tesseract.redb"
 
 [mcp]
 port = 4004
+
+[logging]
+level = "debug"

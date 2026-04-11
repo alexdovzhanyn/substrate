@@ -1,8 +1,8 @@
+use crate::{info, trace};
 use ndarray::Array2;
 use ort::inputs;
 use ort::session::Session;
 use ort::value::Tensor;
-use std::io::{self, Write};
 use tokenizers::Tokenizer;
 
 use crate::error::AppResult;
@@ -14,8 +14,7 @@ pub struct Reranker {
 
 impl Reranker {
   pub fn initialize() -> AppResult<Self> {
-    print!("> Initializing reranker...");
-    io::stdout().flush()?;
+    info!("[Reranker] Initializing...");
 
     let tokenizer = Tokenizer::from_file(Self::get_relative_path(
       "models/bge-reranker-base/tokenizer.json",
@@ -24,8 +23,7 @@ impl Reranker {
       "models/bge-reranker-base/onnx/model.onnx",
     ))?;
 
-    println!(" Done.");
-    io::stdout().flush()?;
+    info!("[Reranker] Initialized");
 
     Ok(Self { tokenizer, session })
   }
@@ -50,7 +48,9 @@ impl Reranker {
     let (_shape, data) = outputs[0].try_extract_tensor::<f32>()?;
     let score = *data.first().ok_or("Empty reranker output")?;
 
-    println!("Query: {query}\nPassage: {passage}\nScore: {score}\n\n");
+    trace!("Query: {query}");
+    trace!("Passage: {passage}");
+    trace!("Score: {score}\n");
 
     Ok(score)
   }

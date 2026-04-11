@@ -3,6 +3,7 @@ use lancedb::{Connection, connect};
 
 use crate::beliefs::embedding::BeliefEmbeddingEntry;
 use crate::error::AppResult;
+use crate::info;
 use crate::util::{Config, get_storage_path};
 
 pub struct EmbeddingDB {
@@ -11,6 +12,8 @@ pub struct EmbeddingDB {
 
 impl EmbeddingDB {
   pub async fn initialize(config: &Config) -> AppResult<Self> {
+    info!("[EmbeddingDB] Initializing...");
+
     let connection = connect(&get_storage_path(&config.storage.lancedb_file))
       .execute()
       .await?;
@@ -19,12 +22,15 @@ impl EmbeddingDB {
 
     db.create_tables().await?;
 
+    info!("[EmbeddingDB] Initialized.");
     Ok(db)
   }
 
   async fn create_tables(&self) -> AppResult<()> {
     let existing_tables = self.connection.table_names().execute().await?;
     let required_tables = vec![("belief_embeddings", BeliefEmbeddingEntry::get_schema)];
+
+    let mut created_tables = 0;
 
     for (table_name, schema_resolver) in required_tables {
       if existing_tables.contains(&table_name.to_string()) {
@@ -37,6 +43,14 @@ impl EmbeddingDB {
         .mode(CreateTableMode::exist_ok(|request| request))
         .execute()
         .await?;
+
+      created_tables += 1;
+    }
+
+    if created_tables == 0 {
+      info!("[EmbeddingDB] All tables ready");
+    } else {
+      info!("[EmbeddingDB] Created {} tables", created_tables);
     }
 
     Ok(())
