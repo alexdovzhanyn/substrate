@@ -2,6 +2,8 @@
 
 A semantic context layer for agent workflows
 
+![Logo](docs/logo.png)
+
 ## Overview
 
 Agent workflows are typically stateless. Given a task, an agent will search the repository, inspect files, and infer structure each time it runs.
