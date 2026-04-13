@@ -1,3 +1,4 @@
+use crate::beliefs::belief::{BeliefCommitment, BeliefProposal};
 use crate::beliefs::{belief::Belief, candidate::CandidateBelief};
 use crate::debug;
 use lancedb::query;
@@ -140,6 +141,26 @@ impl SubstrateService {
     Ok(CallToolResult::success(vec![Content::text(
       "Belief Stored",
     )]))
+  }
+
+  #[tool(description = "Propose a new belief to be added to Substrate")]
+  async fn propose(
+    &self,
+    Parameters(params): Parameters<BeliefProposal>,
+  ) -> Result<CallToolResult, McpError> {
+    // TODO: Build out stub
+
+    Ok(CallToolResult::success(vec![Content::text("Ok")]))
+  }
+
+  #[tool(description = "Commit a previously proposed belief to Substrate ")]
+  async fn commit(
+    &self,
+    Parameters(params): Parameters<BeliefCommitment>,
+  ) -> Result<CallToolResult, McpError> {
+    // TODO: Build out stub
+
+    Ok(CallToolResult::success(vec![Content::text("Ok")]))
   }
 
   // This is only necessary as a stop-gap measure until cursor-cli supports showing MCP prompts

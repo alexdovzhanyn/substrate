@@ -1,7 +1,3 @@
-# Substrate 
-
-A semantic context layer for agent workflows
-
 ![Logo](docs/logo.png)
 
 ## Overview
