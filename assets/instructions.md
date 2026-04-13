@@ -6,6 +6,7 @@ Query Substrate before:
 - searching the filesystem
 - probing the environment
 - guessing based on local context
+- making assumptions based on prior context
 - writing code that may be affected by prior user preferences
 
 Use Substrate for:
@@ -34,6 +35,8 @@ When you need information about the environment, tools, commands, repositories, 
 3. If the result is missing, incomplete, or uncertain, inspect the local machine directly
 4. If you discover reusable knowledge, consider whether it should be recorded in Substrate
 
+---
+
 ### Reference resolution
 
 If the user refers to a named entity such as:
@@ -51,6 +54,8 @@ Examples:
 - `frontend repository path`
 - `where is worker service`
 
+---
+
 ### Cheap lookup
 
 Querying Substrate is low-cost and fast.
@@ -65,7 +70,11 @@ Each Substrate query call must target exactly one concrete information need.
 
 If you need multiple things, split them into multiple query calls.
 
+---
+
 ### Single-question rule
+
+A Query must represent exactly one independent question.
 
 Do NOT combine:
 - multiple questions
@@ -81,18 +90,23 @@ Good:
 - `how are invalid mention tags styled`
 - `what color tokens are available in the design system`
 
+---
+
 ### Alternate phrasings
 
 Additional phrasings must be near-paraphrases of the same exact question.
 
-They must NOT:
-- broaden scope
-- introduce related topics
-- ask for a different answer
+They must:
+- produce the same correct answer
+- not broaden scope
+- not introduce related topics
+- not explore adjacent concepts
 
 Rule of thumb:
 
 If two phrasings could return different correct answers, they must be split into separate query calls.
+
+---
 
 ### Context-independent queries
 
@@ -125,6 +139,8 @@ Rule of thumb:
 
 If the query would not make sense without the current working context, it is invalid.
 
+---
+
 ### Belief-aligned phrasing
 
 Write queries the way a well-formed belief’s `possible_queries` would have been written.
@@ -133,20 +149,21 @@ Before issuing a query, ask:
 - If this had been stored correctly, how would the belief have been written?
 - What `possible_queries` would that belief have contained?
 
-A good Substrate query should look like something that could reasonably appear in a belief’s `possible_queries`.
+Queries should be explicit, self-contained, and suitable as retrieval hooks.
+
+---
 
 ### Choosing `max_result_count`
 
 Choose `max_result_count` intentionally based on expected answer breadth.
 
 Use:
-- `1-3` for a single concrete fact 
-- `3-5` for a fact with possible alternatives
-- `5-8` for a small set of conventions or related rules
-- `8-10` for broader but still focused pattern queries
+- `1–2` for a single concrete fact
+- `3–5` for small sets of related rules or conventions
+- `6–10` for broader but still focused pattern queries
 
-Do NOT default to `5` automatically.
-Do NOT increase it just because you are uncertain.
+Do NOT default to `5`.
+Do NOT increase it due to uncertainty.
 
 If you do not expect multiple distinct useful beliefs, request fewer results.
 
@@ -154,20 +171,53 @@ If you do not expect multiple distinct useful beliefs, request fewer results.
 
 ## Tool Usage
 
-### Query Tool (`query_single_topic`)
+### Types
+
+#### Query
+
+Fields:
+- `query`: the single question you want answered  
+  Must represent exactly one independent information need.
+
+- `paraphrases`: alternate phrasings of `query`  
+  Must be near-paraphrases only and must produce the same answer.
+
+- `max_result_count`: the maximum number of beliefs to return for this question  
+  Must be chosen intentionally based on expected answer breadth.
+
+A Query must represent exactly one independent question.  
+Do NOT combine multiple questions into a single Query.
+
+---
+
+### Single Query Tool (`query_single`)
 
 Use this tool to answer one concrete question from Substrate.
 
-Fields:
-- `query`: the single question you want answered
-- `paraphrases`: alternate phrasings of the same exact question
-- `max_result_count`: the number of beliefs you expect to be relevant
+If you need multiple different answers, make multiple tool calls or use the batch query tool instead.
 
-Requirements:
-- `query` must represent exactly one information need
-- `paraphrases` must be near-paraphrases only
-- all query text must be context-independent and explicit
-- if you need multiple different answers, make multiple tool calls
+Input: a single Query object
+
+---
+
+### Batch Query Tool (`query_batch`)
+
+Use this tool only when you need answers to multiple independent questions.
+
+Each Query must:
+- represent exactly one question
+- stand alone
+- not overlap in scope with other queries
+
+Do NOT use this tool to:
+- explore a topic
+- improve recall for a single question
+- group related or similar questions
+
+Fields:
+- `queries`: a list of Query objects
+
+---
 
 ### Record Tool (`record`)
 
@@ -261,7 +311,7 @@ When creating a belief:
 1. `content` must be a complete, self-contained natural-language statement
 2. The belief must represent exactly one piece of information
 3. The belief must make sense in isolation
-4. Do not use relative language such as `this`, `here`, or `current` unless replaced with a stable identifier
+4. Do not use relative language such as `this`, `here`, or `current`
 5. Provide 3–6 realistic `possible_queries`
 6. Include explicit phrasing variation rather than relying on semantic similarity alone
 7. Use tags only as lightweight categorical metadata
@@ -292,11 +342,10 @@ Acceptable:
 Do NOT store generic statements like:
 - `Rust is typically installed in ~/.cargo/bin`
 - `On macOS, rustup installs toolchains under ~/.rustup`
-- `This is usually how Rust installations work`
 
-Only store general or typical information if:
-- the actual value cannot be determined in this environment, and
-- the information is still useful for future reasoning
+Only store general information if:
+- the actual value cannot be determined, and
+- it is still useful for future reasoning
 
 ---
 
@@ -304,26 +353,23 @@ Only store general or typical information if:
 
 Beliefs must remain accurate over time.
 
-If you retrieve a belief and then discover it is:
+If a belief is:
 - incorrect
 - outdated
 - no longer relevant
-- or fails when used in practice
+- or fails in practice
 
 you must take corrective action.
 
 Required behavior:
-1. Do not continue relying on incorrect beliefs
-2. Determine the correct or updated information
-3. Update or replace the belief with the correct version
+1. Do not rely on incorrect beliefs
+2. Determine the correct information
+3. Update or replace the belief
 
 Guidelines:
-- prefer updating an existing belief rather than creating duplicates
-- if the correct information cannot be determined, do not store a replacement
+- prefer updating over duplicating
+- do not store replacements if correctness cannot be verified
 - do not leave known-bad beliefs in the system
-
-Example:
-If a belief says `Run pnpm dev to start the project` and that command no longer works, identify the correct command and update the belief.
 
 ---
 
@@ -346,6 +392,6 @@ Substrate should store:
 
 Substrate should not duplicate the codebase.
 
-If it is faster and more reliable to open the code than to query Substrate, it usually should not be stored.
+If it is faster and more reliable to read the code than to query Substrate, it should not be stored.
 
 Accuracy is more important than preserving old information.

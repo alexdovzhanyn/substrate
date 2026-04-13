@@ -1,3 +1,5 @@
+use std::fs::remove_dir_all;
+
 use lancedb::database::CreateTableMode;
 use lancedb::{Connection, connect};
 
@@ -52,6 +54,12 @@ impl EmbeddingDB {
     } else {
       info!("[EmbeddingDB] Created {} tables", created_tables);
     }
+
+    Ok(())
+  }
+
+  pub fn flush(config: &Config) -> AppResult<()> {
+    remove_dir_all(get_storage_path(&config.storage.lancedb_file))?;
 
     Ok(())
   }

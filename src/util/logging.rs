@@ -1,4 +1,5 @@
 use std::fmt;
+use std::fs::File;
 use std::sync::OnceLock;
 
 use chrono::Local;
@@ -67,6 +68,10 @@ pub fn log(level: LogLevel, message: String) {
     return;
   }
 
+  println!("{}", get_log_content(level, message));
+}
+
+pub fn get_log_content(level: LogLevel, message: String) -> String {
   let timestamp = Local::now().format("%m-%d-%YT%H:%M:%S");
 
   // light gray for timestamp
@@ -75,5 +80,5 @@ pub fn log(level: LogLevel, message: String) {
 
   let level_color = level.color_code();
 
-  println!("{ts_color}{timestamp}{reset} {level_color}[{level}]{reset} {message}");
+  format!("{ts_color}{timestamp}{reset} {level_color}[{level}]{reset} {message}")
 }

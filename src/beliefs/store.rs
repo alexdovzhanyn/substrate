@@ -1,3 +1,5 @@
+use std::fs::remove_file;
+
 use redb::{Database, ReadableDatabase, TableDefinition};
 use serde_json;
 
@@ -44,5 +46,11 @@ impl BeliefStore {
 
     let belief: Belief = serde_json::from_slice(value.value())?;
     Ok(Some(belief))
+  }
+
+  pub fn flush(config: &Config) -> AppResult<()> {
+    remove_file(get_storage_path(&config.storage.redb_file))?;
+
+    Ok(())
   }
 }

@@ -14,6 +14,7 @@ use crate::{
   trace,
   util::Config,
 };
+use fastembed::EmbeddingModel;
 use futures_util::TryStreamExt;
 use lancedb::query::{ExecutableQuery, QueryBase, Select};
 
@@ -175,6 +176,12 @@ impl SemanticIndex {
     debug!("[SemanticIndex] Results: {beliefs:?}");
 
     Ok(beliefs)
+  }
+
+  pub async fn flush(config: &Config) -> AppResult<()> {
+    EmbeddingDB::flush(config)?;
+
+    Ok(())
   }
 
   fn reranked_candidate_belief_from_embedding(

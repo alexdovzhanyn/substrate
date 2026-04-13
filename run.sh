@@ -3,6 +3,7 @@ set -euo pipefail
 
 PROFILE="debug"
 NO_BUILD=false
+PASSTHROUGH_ARGS=()
 
 # Parse args
 for arg in "$@"; do
@@ -14,8 +15,7 @@ for arg in "$@"; do
       PROFILE="$arg"
       ;;
     *)
-      echo "Unknown argument: $arg"
-      exit 1
+      PASSTHROUGH_ARGS+=("$arg")
       ;;
   esac
 done
@@ -44,4 +44,5 @@ if [ -f "vendor/onnxruntime/build/MacOS/Release/libonnxruntime.dylib" ]; then
   echo -e "Using vendored ONNX Runtime: $ORT_DYLIB_PATH\n"
 fi
 
-exec "$BIN"
+# Forward remaining args
+exec "$BIN" "${PASSTHROUGH_ARGS[@]}"
