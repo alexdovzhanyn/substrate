@@ -10,7 +10,7 @@ use tracing_subscriber::{
 };
 
 use crate::error::AppResult;
-use crate::mcp::service::TesseractService;
+use crate::mcp::service::SubstrateService;
 use crate::state::AppState;
 use crate::util::Config;
 
@@ -28,7 +28,7 @@ pub async fn run(state: AppState, config: Config) -> AppResult<()> {
   let ct = tokio_util::sync::CancellationToken::new();
 
   let service = StreamableHttpService::new(
-    move || Ok(TesseractService::new(state.clone())),
+    move || Ok(SubstrateService::new(state.clone())),
     LocalSessionManager::default().into(),
     StreamableHttpServerConfig::default().with_cancellation_token(ct.child_token()),
   );

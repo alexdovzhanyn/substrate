@@ -45,7 +45,7 @@ pub struct QueryParams {
   ///
   /// If a phrasing would return a different correct answer than `query`,
   /// it must not be included here.
-  pub other_phrasings: Vec<String>,
+  pub paraphrases: Vec<String>,
 
   /// The maximum number of beliefs to return.
   ///
@@ -121,14 +121,14 @@ pub struct IngestMarkdownPromptParams {
 }
 
 #[derive(Clone)]
-pub struct TesseractService {
+pub struct SubstrateService {
   state: AppState,
-  tool_router: ToolRouter<TesseractService>,
-  prompt_router: PromptRouter<TesseractService>,
+  tool_router: ToolRouter<SubstrateService>,
+  prompt_router: PromptRouter<SubstrateService>,
 }
 
 #[tool_router]
-impl TesseractService {
+impl SubstrateService {
   pub fn new(state: AppState) -> Self {
     Self {
       state,
@@ -138,7 +138,7 @@ impl TesseractService {
   }
 
   #[tool(
-    description = "Answer one concrete question from Tesseract. Alternate phrasings must be near-paraphrases of the same question, not related topics."
+    description = "Answer one concrete question from Substrate. Alternate phrasings must be near-paraphrases of the same question, not related topics."
   )]
   async fn query_single_topic(
     &self,
@@ -146,7 +146,7 @@ impl TesseractService {
   ) -> Result<CallToolResult, McpError> {
     let belief_store = &self.state.belief_store.lock().await;
 
-    let mut flat_queries: Vec<String> = params.other_phrasings;
+    let mut flat_queries: Vec<String> = params.paraphrases;
     flat_queries.push(params.query);
 
     let beliefs = self
@@ -168,7 +168,7 @@ impl TesseractService {
   }
 
   #[tool(
-    description = "Record a new belief in Tesseract. You must follow the established nomenclature in the previously provided instructions."
+    description = "Record a new belief in Substrate. You must follow the established nomenclature in the previously provided instructions."
   )]
   async fn record(
     &self,
@@ -215,7 +215,7 @@ impl TesseractService {
 
   // This is only necessary as a stop-gap measure until cursor-cli supports showing MCP prompts
   #[tool(
-    description = "Returns the canonical workflow instructions for ingesting markdown into Tesseract. This tool does not perform ingestion itself."
+    description = "Returns the canonical workflow instructions for ingesting markdown into Substrate. This tool does not perform ingestion itself."
   )]
   async fn ingest_markdown(
     &self,
@@ -223,7 +223,7 @@ impl TesseractService {
   ) -> Result<CallToolResult, McpError> {
     Ok(CallToolResult::structured(json!({
       "workflow": "markdown_ingestion",
-      "goal": "Extract reusable beliefs from markdown and store them in Tesseract",
+      "goal": "Extract reusable beliefs from markdown and store them in Substrate",
       "rules": [
         "Only store reusable, environment-specific facts",
         "Do not store temporary or speculative notes",
@@ -240,9 +240,9 @@ impl TesseractService {
 }
 
 #[prompt_router]
-impl TesseractService {
-  #[prompt(name = "ingest_markdown_into_tesseract")]
-  async fn ingest_markdown_into_tesseract(
+impl SubstrateService {
+  #[prompt(name = "ingest_markdown_into_substrate")]
+  async fn ingest_markdown_into_substrate(
     &self,
     Parameters(args): Parameters<IngestMarkdownPromptParams>,
     _ctx: RequestContext<RoleServer>,
@@ -252,12 +252,12 @@ impl TesseractService {
     let messages = vec![
       PromptMessage::new_text(
         PromptMessageRole::Assistant,
-        "I'll analyze the markdown file you referenced and ingest any generalizable, reusable information into Tesseract",
+        "I'll analyze the markdown file you referenced and ingest any generalizable, reusable information into Substrate",
       ),
       PromptMessage::new_text(
         PromptMessageRole::User,
         format!(
-          "Please take a look at the contents of the markdown file at \"{}\", extract any beliefs you can, and record them in Tesseract, according to Tesseract's belief creation rules",
+          "Please take a look at the contents of the markdown file at \"{}\", extract any beliefs you can, and record them in Substrate, according to Substrate's belief creation rules",
           requested_file
         ),
       ),
@@ -265,14 +265,14 @@ impl TesseractService {
 
     Ok(
       GetPromptResult::new(messages)
-        .with_description(format!("Ingest {} into Tesseract", requested_file)),
+        .with_description(format!("Ingest {} into Substrate", requested_file)),
     )
   }
 }
 
 #[tool_handler]
 #[prompt_handler]
-impl ServerHandler for TesseractService {
+impl ServerHandler for SubstrateService {
   fn get_info(&self) -> ServerInfo {
     let instructions = include_str!("../../assets/instructions.md");
 

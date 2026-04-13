@@ -5658,6 +5658,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "substrate"
+version = "0.1.0"
+dependencies = [
+ "arrow-array",
+ "arrow-buffer",
+ "arrow-schema",
+ "axum",
+ "chrono",
+ "dirs",
+ "fastembed",
+ "futures",
+ "futures-util",
+ "lancedb",
+ "ndarray 0.17.2",
+ "ort",
+ "redb",
+ "rmcp",
+ "schemars 1.2.1",
+ "serde",
+ "serde_json",
+ "tokenizers",
+ "tokio",
+ "tokio-util",
+ "toml",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "subtle"
 version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5895,35 +5924,6 @@ dependencies = [
  "once_cell",
  "rustix 1.1.4",
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "tesseract"
-version = "0.1.0"
-dependencies = [
- "arrow-array",
- "arrow-buffer",
- "arrow-schema",
- "axum",
- "chrono",
- "dirs",
- "fastembed",
- "futures",
- "futures-util",
- "lancedb",
- "ndarray 0.17.2",
- "ort",
- "redb",
- "rmcp",
- "schemars 1.2.1",
- "serde",
- "serde_json",
- "tokenizers",
- "tokio",
- "tokio-util",
- "toml",
- "tracing-subscriber",
- "uuid",
 ]
 
 [[package]]

@@ -32,7 +32,7 @@ else
   TARGET_DIR="target/$PROFILE"
 fi
 
-BIN="$TARGET_DIR/tesseract"
+BIN="$TARGET_DIR/substrate"
 
 if [ ! -f "$BIN" ]; then
   echo "Binary not found: $BIN"

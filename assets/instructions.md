@@ -1,14 +1,14 @@
-Tesseract is a retrieval-optimized memory system for technical environments.
+Substrate is a retrieval-optimized memory system for technical environments.
 
-Use Tesseract as your first source of truth for reusable knowledge about the local development environment and the user’s established technical preferences.
+Use Substrate as your first source of truth for reusable knowledge about the local development environment and the user’s established technical preferences.
 
-Query Tesseract before:
+Query Substrate before:
 - searching the filesystem
 - probing the environment
 - guessing based on local context
 - writing code that may be affected by prior user preferences
 
-Use Tesseract for:
+Use Substrate for:
 - repository, workspace, and file locations
 - commands for running, building, testing, deploying, or starting things
 - tools, configs, dependencies, and system behavior
@@ -29,10 +29,10 @@ Do NOT store:
 
 When you need information about the environment, tools, commands, repositories, workflows, or user preferences:
 
-1. Query Tesseract first
+1. Query Substrate first
 2. If the result is sufficient, use it
 3. If the result is missing, incomplete, or uncertain, inspect the local machine directly
-4. If you discover reusable knowledge, consider whether it should be recorded in Tesseract
+4. If you discover reusable knowledge, consider whether it should be recorded in Substrate
 
 ### Reference resolution
 
@@ -44,7 +44,7 @@ If the user refers to a named entity such as:
 
 treat it as a lookup problem first.
 
-Query Tesseract for the entity’s identity or location before scanning directories, guessing from names, or assuming the current repo is correct.
+Query Substrate for the entity’s identity or location before scanning directories, guessing from names, or assuming the current repo is correct.
 
 Examples:
 - `ai repo location`
@@ -53,15 +53,15 @@ Examples:
 
 ### Cheap lookup
 
-Querying Tesseract is low-cost and fast.
+Querying Substrate is low-cost and fast.
 
-Do not skip querying Tesseract simply because you are unsure whether it contains the answer.
+Do not skip querying Substrate simply because you are unsure whether it contains the answer.
 
 ---
 
 ## Query Construction Rules
 
-Each Tesseract query call must target exactly one concrete information need.
+Each Substrate query call must target exactly one concrete information need.
 
 If you need multiple things, split them into multiple query calls.
 
@@ -133,7 +133,7 @@ Before issuing a query, ask:
 - If this had been stored correctly, how would the belief have been written?
 - What `possible_queries` would that belief have contained?
 
-A good Tesseract query should look like something that could reasonably appear in a belief’s `possible_queries`.
+A good Substrate query should look like something that could reasonably appear in a belief’s `possible_queries`.
 
 ### Choosing `max_result_count`
 
@@ -156,7 +156,7 @@ If you do not expect multiple distinct useful beliefs, request fewer results.
 
 ### Query Tool (`query_single_topic`)
 
-Use this tool to answer one concrete question from Tesseract.
+Use this tool to answer one concrete question from Substrate.
 
 Fields:
 - `query`: the single question you want answered
@@ -189,14 +189,14 @@ Requirements:
 
 ## Cache Fill Rule
 
-A failed Tesseract query is a strong signal that new reusable knowledge may need to be recorded.
+A failed Substrate query is a strong signal that new reusable knowledge may need to be recorded.
 
 If you:
-1. query Tesseract
+1. query Substrate
 2. do not find a useful result
 3. then discover the answer through filesystem inspection, commands, or reasoning
 
-you should store that information in Tesseract if it is reusable knowledge and not merely a trivial implementation detail.
+you should store that information in Substrate if it is reusable knowledge and not merely a trivial implementation detail.
 
 Store discovered information when it is:
 - likely to be needed again
@@ -207,7 +207,7 @@ Store discovered information when it is:
 Do NOT store discovered information when it is:
 - a trivial code detail
 - a direct restatement of something obvious in one file
-- a styling or implementation fact easier to inspect in code than retrieve from Tesseract
+- a styling or implementation fact easier to inspect in code than retrieve from Substrate
 - low-value and unlikely to be useful again
 
 Store:
@@ -227,7 +227,7 @@ Mental model:
 
 ## Code Generation Preference Rule
 
-Before writing or modifying code, query Tesseract for relevant user preferences.
+Before writing or modifying code, query Substrate for relevant user preferences.
 
 This includes:
 - formatting, naming, indentation, and style conventions
@@ -241,7 +241,7 @@ This includes:
 - previously observed consistent preferences in the user’s code
 
 Required behavior:
-1. Query Tesseract for relevant preferences before coding
+1. Query Substrate for relevant preferences before coding
 2. If relevant beliefs exist, follow them
 3. If no preferences are found, proceed normally
 4. If you observe a consistent preference during implementation, record it as a new belief
@@ -329,13 +329,13 @@ If a belief says `Run pnpm dev to start the project` and that command no longer 
 
 ## Mental Model
 
-Tesseract is a reusable memory layer for valuable, persistent knowledge.
+Substrate is a reusable memory layer for valuable, persistent knowledge.
 
 A belief is:
 - one self-contained piece of knowledge
 - plus several likely retrieval phrasings
 
-Tesseract should store:
+Substrate should store:
 - commands
 - locations
 - relationships
@@ -344,8 +344,8 @@ Tesseract should store:
 - architecture
 - non-obvious facts
 
-Tesseract should not duplicate the codebase.
+Substrate should not duplicate the codebase.
 
-If it is faster and more reliable to open the code than to query Tesseract, it usually should not be stored.
+If it is faster and more reliable to open the code than to query Substrate, it usually should not be stored.
 
 Accuracy is more important than preserving old information.

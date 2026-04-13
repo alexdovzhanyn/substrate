@@ -1,20 +1,12 @@
-# Tesseract 
+# Substrate 
 
 A semantic context layer for agent workflows
-
-<p align="center">
-  <img src="https://gifdb.com/images/high/tesseract-474-x-498-gif-4np9yatx7901hbq0.gif" width="40%" />
-</p>
-
----
 
 ## Overview
 
 Agent workflows are typically stateless. Given a task, an agent will search the repository, inspect files, and infer structure each time it runs.
 
-Tesseract provides a system where agents can retain and reuse context across runs instead of rediscovering it.
-
----
+Substrate provides a system where agents can retain and reuse context across runs instead of rediscovering it.
 
 ## Why not just markdown?
 
@@ -27,12 +19,10 @@ This works, but has limitations:
 - duplicate or conflicting entries accumulate over time  
 - keeping files clean requires manual effort or strict conventions  
 
-Tesseract replaces this with a structured system where context can be:
+Substrate replaces this with a structured system where context can be:
 - queried directly using natural language  
 - updated or replaced without manual cleanup  
 - incrementally improved as agents interact with it  
-
----
 
 ## What it does
 
@@ -41,17 +31,13 @@ Tesseract replaces this with a structured system where context can be:
 - Persists knowledge across runs  
 - Allows new information to replace or refine existing context  
 
----
-
 ## Architecture
 
-![Architecture](docs/tesseract_arch.png)
-
----
+![Architecture](docs/substrate_arch.png)
 
 ## Setup
 
-Tesseract relies on a local embedding model. Models are not included in the repository due to size constraints.
+Substrate relies on a local embedding model. Models are not included in the repository due to size constraints.
 
 First, install the Hugging Face CLI:
 
@@ -81,8 +67,8 @@ models/
 
 ## Usage
 
-Start Tesseract:
+Start Substrate:
 
 ```bash
-tesseract start
+substrate start
 ```

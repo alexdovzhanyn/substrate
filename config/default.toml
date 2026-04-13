@@ -4,8 +4,8 @@ max_l2_distance = 0.75
 reranker_top_k = 3
 
 [storage]
-lancedb_file = "tesseract.lancedb"
-redb_file = "tesseract.redb"
+lancedb_file = "substrate.lancedb"
+redb_file = "substrate.redb"
 
 [mcp]
 port = 4004
