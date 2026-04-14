@@ -219,21 +219,90 @@ Fields:
 
 ---
 
-### Record Tool (`record`)
+### Propose Tool (`propose`)
 
-Use this tool to store a new belief.
+Use this tool to propose a new belief for storage in Substrate.
 
-Fields:
+Input fields:
 - `content`: one complete, self-contained belief statement
 - `possible_queries`: 3–6 realistic retrieval phrasings
 - `tags`: 1–5 lightweight categorical labels
 
-Requirements:
-- beliefs must be atomic
-- beliefs must make sense in isolation
-- beliefs must not use relative language
-- `possible_queries` are the primary retrieval hooks
-- tags are secondary metadata, not the primary retrieval mechanism
+The `propose` tool has two possible outcomes:
+
+#### 1. Immediate success
+
+If there are no meaningful conflicts, Substrate may create the belief immediately.
+
+In that case, no further action is required.
+
+#### 2. BeliefDraft returned
+
+If Substrate detects potential conflicts, it may return a `BeliefDraft` instead of immediately creating the belief.
+If a BeliefDraft is returned, **the belief has not been persisted**.
+
+A `BeliefDraft` contains:
+- an `id`
+- the proposed belief content
+- `potential_conflicts`
+
+If a `BeliefDraft` is returned, you must not stop there.  
+You must inspect the potential conflicts and then call the `commit` tool.
+
+The purpose of `commit` is to finalize a proposed belief after resolving whether it:
+- invalidates an existing belief
+- duplicates an existing belief
+- should update an existing belief with a missed query for better future retrieval
+
+---
+
+### Commit Tool (`commit`)
+
+Use this tool only after `propose` returns a `BeliefDraft`.
+
+The `commit` tool finalizes the proposal and tells Substrate how to resolve any detected conflicts.
+
+Input body:
+
+- `id`: the identifier received from the `BeliefDraft`
+- `conflicts`: a list of resolved conflicts from the `potential_conflicts` returned by the `propose` tool
+
+All conflicts that represent real relationships must be addressed.
+
+You may omit conflicts only if they are clearly unrelated or incorrect.
+
+Each conflict must include exactly one `conflict_reason`.
+
+`conflicts` format:
+
+- `conflicting_belief_id`  
+  Type: `String`  
+  Required: yes  
+  Description: ID of the conflicting belief
+
+- `conflict_reason`  
+  Type: `'INVALIDATES' | 'DUPLICATE'`  
+  Required: yes  
+  Description: Reason for conflict
+
+- `missed_query`  
+  Type: `String`  
+  Required: only if `conflict_reason == "DUPLICATE"`  
+  Description: The original query that failed to retrieve the existing belief.  
+  This will be used to update the existing belief with the missed query to improve future lookups.
+
+When using `DUPLICATE`, `missed_query` must be the actual query that failed to retrieve the existing belief.  
+Do NOT invent or approximate this value.
+
+Use `INVALIDATES` when the new belief should replace or supersede an existing one.
+
+Use `DUPLICATE` when the new proposal is not meaningfully new, but the existing belief should be improved.
+
+If you are uncertain how to resolve a conflict, do not guess:
+- do not mark as `INVALIDATES` unless confident
+- use `DUPLICATE` only when the beliefs are meaningfully the same
+
+Do NOT call `commit` unless `propose` returned a `BeliefDraft`.
 
 ---
 
@@ -294,7 +363,7 @@ Required behavior:
 1. Query Substrate for relevant preferences before coding
 2. If relevant beliefs exist, follow them
 3. If no preferences are found, proceed normally
-4. If you observe a consistent preference during implementation, record it as a new belief
+4. If you observe a consistent preference during implementation, propose it as a new belief
 
 Do not assume defaults if prior preferences may exist.
 
@@ -306,7 +375,7 @@ User preferences are part of the environment and should be treated like other re
 
 ## Belief Creation Rules
 
-When creating a belief:
+When creating or proposing a belief:
 
 1. `content` must be a complete, self-contained natural-language statement
 2. The belief must represent exactly one piece of information

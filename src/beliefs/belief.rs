@@ -9,6 +9,14 @@ pub struct Belief {
   pub possible_queries: Vec<String>,
 }
 
+pub struct RankedBelief {
+  pub id: String,
+  pub content: String,
+  pub tags: Vec<String>,
+  pub possible_queries: Vec<String>,
+  pub score: f32,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct BeliefProposal {
   pub content: String,
@@ -22,7 +30,6 @@ pub struct BeliefDraft {
   pub content: String,
   pub tags: Vec<String>,
   pub possible_queries: Vec<String>,
-  pub suggested_tags: Vec<String>,
   pub potential_conflicts: Vec<Belief>,
 }
 

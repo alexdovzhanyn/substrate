@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use crate::beliefs::BeliefStore;
-use crate::beliefs::belief::Belief;
+use crate::beliefs::belief::{Belief, RankedBelief};
 use crate::beliefs::candidate::{CandidateBelief, CandidateBeliefEmbeddingEntry};
 use crate::beliefs::embedding::BeliefEmbeddingEntry;
 use crate::semantic;
@@ -94,12 +94,42 @@ impl SemanticIndex {
     Ok(())
   }
 
-  pub async fn query_beliefs(
+  pub async fn query_candidate_beliefs(
     &mut self,
-    query: Vec<String>,
-    max_result_count: usize,
+    query: &[String],
+    limit: usize,
     belief_store: &BeliefStore,
   ) -> AppResult<Vec<CandidateBelief>> {
+    let ranked = self.find_ranked_candidates(query, belief_store).await?;
+
+    let limit = std::cmp::max(limit, self.reranker_top_k);
+
+    let candidates = ranked
+      .iter()
+      .take(limit)
+      .map(|r| CandidateBelief {
+        content: r.content.clone(),
+        score: r.score,
+      })
+      .collect();
+
+    debug!("[SemanticIndex] Query [LIMIT {limit}]: {query:?}");
+    debug!("[SemanticIndex] Results: {candidates:?}");
+
+    Ok(candidates)
+  }
+
+  pub async fn flush(config: &Config) -> AppResult<()> {
+    EmbeddingDB::flush(config)?;
+
+    Ok(())
+  }
+
+  pub async fn find_ranked_candidates(
+    &mut self,
+    query: &[String],
+    belief_store: &BeliefStore,
+  ) -> AppResult<Vec<RankedBelief>> {
     let table = self
       .db
       .connection
@@ -148,18 +178,12 @@ impl SemanticIndex {
         continue;
       }
 
-      if semantically_similar_beliefs.contains(&entry.belief_id) {
-        continue;
-      }
-
       semantically_similar_beliefs.insert(entry.belief_id.clone());
     }
 
     let mut candidates = semantically_similar_beliefs
       .into_iter()
-      .map(|belief_id| {
-        self.reranked_candidate_belief_from_embedding(&belief_id, &query, &belief_store)
-      })
+      .map(|belief_id| self.reranked_candidate_belief_from_id(&belief_id, query, belief_store))
       .collect::<AppResult<Vec<_>>>()?;
 
     candidates.sort_unstable_by(|a, b| {
@@ -168,28 +192,15 @@ impl SemanticIndex {
         .unwrap_or(std::cmp::Ordering::Equal)
     });
 
-    let max_results = std::cmp::max(max_result_count, self.reranker_top_k);
-
-    let beliefs = candidates.iter().take(max_results).cloned().collect();
-
-    debug!("[SemanticIndex] Query [LIMIT {max_results}]: {query:?}");
-    debug!("[SemanticIndex] Results: {beliefs:?}");
-
-    Ok(beliefs)
+    Ok(candidates)
   }
 
-  pub async fn flush(config: &Config) -> AppResult<()> {
-    EmbeddingDB::flush(config)?;
-
-    Ok(())
-  }
-
-  fn reranked_candidate_belief_from_embedding(
+  fn reranked_candidate_belief_from_id(
     &mut self,
     belief_id: &str,
-    queries: &Vec<String>,
+    queries: &[String],
     belief_store: &BeliefStore,
-  ) -> AppResult<CandidateBelief> {
+  ) -> AppResult<RankedBelief> {
     let belief = belief_store
       .get(belief_id)?
       .ok_or_else(|| format!("Missing belief in store for id {}", belief_id))?;
@@ -213,8 +224,11 @@ impl SemanticIndex {
       best_raw_reranker_score = best_raw_reranker_score.max(raw_reranker_score);
     }
 
-    Ok(CandidateBelief {
+    Ok(RankedBelief {
+      id: belief_id.into(),
       content: belief.content,
+      tags: belief.tags,
+      possible_queries: belief.possible_queries,
       score: Self::sigmoid(best_raw_reranker_score), // Normalize to 0..1
     })
   }

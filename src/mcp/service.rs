@@ -1,4 +1,4 @@
-use crate::beliefs::belief::{BeliefCommitment, BeliefProposal};
+use crate::beliefs::belief::{BeliefCommitment, BeliefDraft, BeliefProposal};
 use crate::beliefs::{belief::Belief, candidate::CandidateBelief};
 use crate::debug;
 use lancedb::query;
@@ -56,8 +56,8 @@ impl SubstrateService {
       .semantic_index
       .lock()
       .await
-      .query_beliefs(
-        flat_queries,
+      .query_candidate_beliefs(
+        &flat_queries,
         params.max_result_count.unwrap_or(3),
         belief_store,
       )
@@ -83,8 +83,8 @@ impl SubstrateService {
       flat_queries.push(query_set.query.clone());
 
       let candidates = semantic_index
-        .query_beliefs(
-          flat_queries,
+        .query_candidate_beliefs(
+          &flat_queries,
           query_set.max_result_count.unwrap_or(3),
           belief_store,
         )
@@ -97,60 +97,90 @@ impl SubstrateService {
     Ok(CallToolResult::structured(json!(beliefs)))
   }
 
-  #[tool(
-    description = "Record a new belief in Substrate. You must follow the established nomenclature in the previously provided instructions."
-  )]
-  async fn record(
-    &self,
-    Parameters(params): Parameters<RecordParams>,
-  ) -> Result<CallToolResult, McpError> {
-    let belief = Belief {
-      id: uuid::Uuid::new_v4().to_string(),
-      content: params.content,
-      tags: params
-        .tags
-        .into_iter()
-        .map(|s| s.trim().to_string())
-        .collect(),
-      possible_queries: params
-        .possible_queries
-        .into_iter()
-        .map(|s| s.trim().to_string())
-        .collect(),
-    };
-
-    self
-      .state
-      .semantic_index
-      .lock()
-      .await
-      .index(&belief)
-      .await
-      .map_err(to_mcp_error)?;
-
-    self
-      .state
-      .belief_store
-      .lock()
-      .await
-      .insert(&belief)
-      .map_err(to_mcp_error)?;
-
-    debug!("[SemanticIndex] Recorded new belief: {belief:?}");
-
-    Ok(CallToolResult::success(vec![Content::text(
-      "Belief Stored",
-    )]))
-  }
-
   #[tool(description = "Propose a new belief to be added to Substrate")]
   async fn propose(
     &self,
     Parameters(params): Parameters<BeliefProposal>,
   ) -> Result<CallToolResult, McpError> {
-    // TODO: Build out stub
+    let belief_store = &self.state.belief_store.lock().await;
 
-    Ok(CallToolResult::success(vec![Content::text("Ok")]))
+    let draft_id = uuid::Uuid::new_v4().to_string();
+
+    let tags = params
+      .tags
+      .into_iter()
+      .map(|s| s.trim().to_string())
+      .collect();
+
+    let possible_queries = params
+      .possible_queries
+      .clone()
+      .into_iter()
+      .map(|s| s.trim().to_string())
+      .collect();
+
+    let mut flat_queries: Vec<String> = params.possible_queries;
+    flat_queries.push(params.content.clone());
+
+    let potential_conflicts: Vec<Belief> = self
+      .state
+      .semantic_index
+      .lock()
+      .await
+      .find_ranked_candidates(&flat_queries, belief_store)
+      .await
+      .map_err(to_mcp_error)?
+      .into_iter()
+      .filter(|c| c.score >= 0.75)
+      .map(|c| Belief {
+        id: c.id,
+        content: c.content,
+        tags: c.tags,
+        possible_queries: c.possible_queries,
+      })
+      .collect();
+
+    if potential_conflicts.len() == 0 {
+      let belief = Belief {
+        id: draft_id,
+        content: params.content,
+        tags,
+        possible_queries,
+      };
+
+      self
+        .state
+        .semantic_index
+        .lock()
+        .await
+        .index(&belief)
+        .await
+        .map_err(to_mcp_error)?;
+
+      self
+        .state
+        .belief_store
+        .lock()
+        .await
+        .insert(&belief)
+        .map_err(to_mcp_error)?;
+
+      debug!("[SemanticIndex] Recorded new belief: {belief:?}");
+
+      return Ok(CallToolResult::success(vec![Content::text(
+        "No conflicts, belief recorded successully",
+      )]));
+    }
+
+    // TODO: Store the draft for usage in the commit tool later
+
+    Ok(CallToolResult::structured(json!(BeliefDraft {
+      id: draft_id,
+      content: params.content,
+      tags,
+      possible_queries,
+      potential_conflicts,
+    })))
   }
 
   #[tool(description = "Commit a previously proposed belief to Substrate ")]

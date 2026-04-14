@@ -22,7 +22,7 @@ impl EmbeddingResolver {
     Ok(Self { model })
   }
 
-  pub fn embed(&mut self, inputs: &Vec<String>) -> Result<Vec<Vec<f32>>, Error> {
+  pub fn embed(&mut self, inputs: &[String]) -> Result<Vec<Vec<f32>>, Error> {
     let embeddings = self.model.embed(inputs, None)?;
 
     Ok(embeddings)
