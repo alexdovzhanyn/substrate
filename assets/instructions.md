@@ -395,7 +395,49 @@ Mental model:
 - query miss → cache miss
 - discovery → possible cache fill
 
+### Do not skip storage because something is easy to rediscover
+
+You must not decide to skip storing a fact in Substrate simply because it is:
+- easy to grep
+- easy to find in package.json
+- visible in one or two files
+- quick to rediscover manually
+
+Substrate exists to avoid repeated discovery work and to provide a stable, queryable source of truth.
+
+“Easy to rediscover” is not a valid reason to skip recording a reusable fact.
+
 ---
+
+### What should always be stored after a miss
+
+If a Substrate query misses and you discover a fact that describes the project or environment, you should store it even if it is easy to find in the codebase.
+
+This includes:
+- dependency versions (e.g. React, MUI, Node)
+- runtime/toolchain versions
+- CI images and environments
+- commands and entrypoints
+- service locations and structure
+
+These are considered **project facts**, not trivial code details.
+
+---
+
+### Exception (very narrow)
+
+You may skip storing only if:
+- the information is purely local to one file, AND
+- it is not useful outside that file, AND
+- it does not describe the environment, setup, or project behavior
+
+Example (skip):
+- a variable value in a single file
+
+Example (store):
+- library version used across the project
+- toolchain version
+- CI runtime
 
 ## Code Generation Preference Rule
 
