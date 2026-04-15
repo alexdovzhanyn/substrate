@@ -1,3 +1,6 @@
+use std::ops::Deref;
+use std::time::SystemTime;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -7,14 +10,21 @@ pub struct Belief {
   pub content: String,
   pub tags: Vec<String>,
   pub possible_queries: Vec<String>,
+  pub created_at: u64,
+  pub updated_at: u64,
 }
 
 pub struct RankedBelief {
-  pub id: String,
-  pub content: String,
-  pub tags: Vec<String>,
-  pub possible_queries: Vec<String>,
+  pub belief: Belief,
   pub score: f32,
+}
+
+impl Deref for RankedBelief {
+  type Target = Belief;
+
+  fn deref(&self) -> &Self::Target {
+    &self.belief
+  }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -31,26 +41,25 @@ pub struct BeliefDraft {
   pub tags: Vec<String>,
   pub possible_queries: Vec<String>,
   pub potential_conflicts: Vec<Belief>,
+  pub created_at: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct BeliefCommitment {
-  pub id: String,
-  pub content: String,
-  pub tags: Vec<String>,
-  pub possible_queries: Vec<String>,
-  pub conflicts: Vec<BeliefConflict>,
+  pub draft_id: String,
+  pub conflict_resolutions: Vec<BeliefConflictResolution>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct BeliefConflict {
+pub struct BeliefConflictResolution {
   pub conflicting_belief_id: String,
-  pub conflict_reason: ConflictReason,
+  pub action: ResolutionAction,
   pub missed_query: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub enum ConflictReason {
-  Invalidates,
-  Duplicate,
+pub enum ResolutionAction {
+  Invalidate,
+  MergeDuplicate,
+  Ignore,
 }

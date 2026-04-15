@@ -35,6 +35,59 @@ When you need information about the environment, tools, commands, repositories, 
 3. If the result is missing, incomplete, or uncertain, inspect the local machine directly
 4. If you discover reusable knowledge, consider whether it should be recorded in Substrate
 
+### Substrate-First Facts (Critical)
+
+Some questions are about **project or environment facts**, not about the contents of a specific file.
+
+These MUST always be resolved through Substrate first.
+
+#### Definition
+
+A question is a **Substrate-first fact** if it asks about:
+
+- runtime or toolchain versions (Node, Python, package manager, etc.)
+- how to run, build, test, or deploy a project
+- CI/CD configuration (images, pipelines, environments)
+- repository or service locations
+- environment variables, ports, or infrastructure details
+- project-wide conventions or setup behavior
+
+These are **reusable facts about the environment**, not one-off code details.
+
+---
+
+#### Required behavior
+
+For any Substrate-first fact:
+
+1. Query Substrate first (`query_single` or `query_batch`)
+2. If Substrate returns a useful answer, use it
+3. If Substrate does not return a useful answer, then inspect the repo or environment
+4. If you discover a reusable fact, you must propose it to Substrate
+
+You must not skip Step 1 for these questions.
+
+---
+
+#### Examples
+
+Substrate-first:
+- "what version of node is this project using"
+- "how do i start this project"
+- "what port does this service run on"
+- "what repo contains the frontend"
+- "what CI image is used"
+
+Not Substrate-first:
+- "what does this function do"
+- "why does this hook fire"
+- "what is happening in this file"
+
+Rule of thumb:
+
+If the answer describes the **environment or project setup**, it is Substrate-first.  
+If the answer requires reading **specific code behavior**, it is not.
+
 ---
 
 ### Reference resolution
@@ -265,7 +318,7 @@ The `commit` tool finalizes the proposal and tells Substrate how to resolve any 
 Input body:
 
 - `id`: the identifier received from the `BeliefDraft`
-- `conflicts`: a list of resolved conflicts from the `potential_conflicts` returned by the `propose` tool
+- `conflict_resolutions`: a list of resolved conflicts from the `potential_conflicts` returned by the `propose` tool
 
 All conflicts that represent real relationships must be addressed.
 
@@ -273,34 +326,34 @@ You may omit conflicts only if they are clearly unrelated or incorrect.
 
 Each conflict must include exactly one `conflict_reason`.
 
-`conflicts` format:
+`conflict_resolutions` format:
 
 - `conflicting_belief_id`  
   Type: `String`  
   Required: yes  
   Description: ID of the conflicting belief
 
-- `conflict_reason`  
-  Type: `'INVALIDATES' | 'DUPLICATE'`  
+- `action`  
+  Type: `'Invalidate' | 'MergeDuplicate' | 'Ignore'`  
   Required: yes  
-  Description: Reason for conflict
+  Description: How this conflict should be resolved
 
 - `missed_query`  
   Type: `String`  
-  Required: only if `conflict_reason == "DUPLICATE"`  
+  Required: only if `action == "MergeDuplicate"`  
   Description: The original query that failed to retrieve the existing belief.  
   This will be used to update the existing belief with the missed query to improve future lookups.
 
-When using `DUPLICATE`, `missed_query` must be the actual query that failed to retrieve the existing belief.  
+When using `MergeDuplicate`, `missed_query` must be the actual query that failed to retrieve the existing belief.  
 Do NOT invent or approximate this value.
 
-Use `INVALIDATES` when the new belief should replace or supersede an existing one.
+Use `Invalidate` when the new belief should replace or supersede an existing one.
 
-Use `DUPLICATE` when the new proposal is not meaningfully new, but the existing belief should be improved.
+Use `MergeDuplicate` when the new proposal is not meaningfully new, but the existing belief should be improved.
 
 If you are uncertain how to resolve a conflict, do not guess:
-- do not mark as `INVALIDATES` unless confident
-- use `DUPLICATE` only when the beliefs are meaningfully the same
+- do not mark as `Invalidate` unless confident
+- use `MergeDuplicate` only when the beliefs are meaningfully the same
 
 Do NOT call `commit` unless `propose` returned a `BeliefDraft`.
 

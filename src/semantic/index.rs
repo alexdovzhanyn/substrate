@@ -94,6 +94,53 @@ impl SemanticIndex {
     Ok(())
   }
 
+  pub async fn insert_embedding_entry(
+    &mut self,
+    belief_id: &str,
+    embedding_source: &str,
+    embedding_text: &str,
+  ) -> AppResult<()> {
+    let vector = self
+      .embedding_resolver
+      .embed_single(embedding_text.into())?;
+
+    let embedding_entry = BeliefEmbeddingEntry {
+      belief_id: belief_id.to_string(),
+      entry_id: uuid::Uuid::new_v4().to_string(),
+      embedding_source: embedding_source.into(),
+      embedding_text: embedding_text.into(),
+      vector,
+    };
+
+    let batch = BeliefEmbeddingEntry::to_record_batch(&vec![embedding_entry])?;
+
+    let table = self
+      .db
+      .connection
+      .open_table("belief_embeddings")
+      .execute()
+      .await?;
+
+    table.add(batch).execute().await?;
+
+    Ok(())
+  }
+
+  pub async fn remove_embeddings(&mut self, belief_id: &str) -> AppResult<()> {
+    let table = self
+      .db
+      .connection
+      .open_table("belief_embeddings")
+      .execute()
+      .await?;
+
+    let predicate = format!("belief_id = \"{}\"", belief_id);
+
+    table.delete(&predicate).await?;
+
+    Ok(())
+  }
+
   pub async fn query_candidate_beliefs(
     &mut self,
     query: &[String],
@@ -178,7 +225,9 @@ impl SemanticIndex {
         continue;
       }
 
-      semantically_similar_beliefs.insert(entry.belief_id.clone());
+      if semantically_similar_beliefs.insert(entry.belief_id.clone()) {
+        trace!("[SemanticIndex] Semantically similar: {entry:?}");
+      }
     }
 
     let mut candidates = semantically_similar_beliefs
@@ -202,7 +251,7 @@ impl SemanticIndex {
     belief_store: &BeliefStore,
   ) -> AppResult<RankedBelief> {
     let belief = belief_store
-      .get(belief_id)?
+      .get_belief(belief_id)?
       .ok_or_else(|| format!("Missing belief in store for id {}", belief_id))?;
 
     let belief_as_passage = format!(
@@ -225,10 +274,7 @@ impl SemanticIndex {
     }
 
     Ok(RankedBelief {
-      id: belief_id.into(),
-      content: belief.content,
-      tags: belief.tags,
-      possible_queries: belief.possible_queries,
+      belief,
       score: Self::sigmoid(best_raw_reranker_score), // Normalize to 0..1
     })
   }

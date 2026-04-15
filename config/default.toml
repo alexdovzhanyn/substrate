@@ -11,4 +11,4 @@ redb_file = "substrate.redb"
 port = 4004
 
 [logging]
-level = "debug"
+level = "trace"
