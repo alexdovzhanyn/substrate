@@ -1,8 +1,9 @@
-use crate::beliefs::BeliefStore;
+use tokio::sync::Mutex;
+
+use crate::core::SubstrateCore;
 use crate::error;
 use crate::error::AppResult;
-use crate::semantic::SemanticIndex;
-use crate::state::AppState;
+use crate::tui;
 use crate::util;
 use crate::util::Config;
 use crate::util::get_storage_path;
@@ -13,6 +14,7 @@ use std::fs::write;
 use std::fs::{OpenOptions, create_dir_all};
 use std::io::Write;
 use std::process::{Command, Stdio};
+use std::sync::Arc;
 
 pub async fn route_command(args: Vec<String>) -> AppResult<()> {
   match args.get(1).map(String::as_str) {
@@ -22,6 +24,7 @@ pub async fn route_command(args: Vec<String>) -> AppResult<()> {
     Some("logs") => command_logs(&args).await?,
     Some("flush") => command_flush().await?,
     Some("status") => command_status().await?,
+    Some("console") => command_console().await?,
     _ => command_help().await?,
   }
 
@@ -72,13 +75,13 @@ async fn command_serve(_args: &[String]) -> AppResult<()> {
 
   logging::init(&config);
 
-  let state = AppState::initialize(&config).await?;
+  let core = Arc::new(Mutex::new(SubstrateCore::initialize(&config).await?));
 
-  let mcp_state = state.clone();
+  let mcp_core = core.clone();
   let mcp_config = config.clone();
 
   let mcp_handle = tokio::spawn(async move {
-    if let Err(err) = crate::mcp::server::run(mcp_state, mcp_config).await {
+    if let Err(err) = crate::mcp::server::run(mcp_core, mcp_config).await {
       error!("MCP server exited with error: {err}");
     }
   });
@@ -121,10 +124,7 @@ async fn command_flush() -> AppResult<()> {
     return Ok(());
   }
 
-  let config = Config::load("config/default.toml")?;
-
-  SemanticIndex::flush(&config).await?;
-  BeliefStore::flush(&config)?;
+  SubstrateCore::flush().await?;
 
   println!("Substrate data flushed");
 
@@ -167,6 +167,12 @@ async fn command_status() -> AppResult<()> {
   Ok(())
 }
 
+async fn command_console() -> AppResult<()> {
+  ratatui::run(tui::app)?;
+
+  Ok(())
+}
+
 async fn command_help() -> AppResult<()> {
   println!(
     "
@@ -177,6 +183,7 @@ substrate [command] [options]
 \x1B[48;5;15;38;5;16;1m COMMANDS \x1B[0m\n
   start                                  Start the Substrate daemon as a background process
   stop                                   Stop a running Substrate daemon
+  console                                Start an interactive terminal console UI to inspect Substrate data
   status                                 Check whether Substrate is currently running
   logs                                   View the logs produced by Substrate
   flush                                  Clears all Substrate belief data

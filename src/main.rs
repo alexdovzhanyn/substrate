@@ -1,10 +1,9 @@
-mod beliefs;
 mod cli;
+mod core;
 mod error;
 mod macros;
 mod mcp;
-mod semantic;
-mod state;
+mod tui;
 mod util;
 
 use crate::error::AppResult;

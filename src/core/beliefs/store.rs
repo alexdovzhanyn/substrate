@@ -4,7 +4,8 @@ use std::time::SystemTime;
 use redb::{Database, ReadableDatabase, TableDefinition};
 use serde_json;
 
-use crate::beliefs::belief::{Belief, BeliefDraft};
+use crate::core::beliefs::belief::{Belief, BeliefDraft};
+use crate::debug;
 use crate::error::AppResult;
 use crate::util::{Config, get_storage_path};
 
@@ -34,6 +35,8 @@ impl BeliefStore {
 
     write_txn.commit()?;
 
+    debug!("[BeliefStore] Inserted new belief: \n{belief:#?}");
+
     Ok(())
   }
 
@@ -56,6 +59,8 @@ impl BeliefStore {
 
     write_txn.commit()?;
 
+    debug!("[BeliefStore] Updated belief: \n{belief:#?}");
+
     Ok(())
   }
 
@@ -68,6 +73,8 @@ impl BeliefStore {
     }
 
     write_txn.commit()?;
+
+    debug!("[BeliefStore] Deleted belief \n{belief_id:?}");
 
     Ok(())
   }
@@ -98,6 +105,8 @@ impl BeliefStore {
 
     write_txn.commit()?;
 
+    debug!("[BeliefStore] Created new draft: \n{draft:#?}");
+
     Ok(())
   }
 
@@ -125,6 +134,7 @@ impl BeliefStore {
 
     write_txn.commit()?;
 
+    debug!("[BeliefStore] Deleted draft \n{draft_id:?}");
     Ok(())
   }
 

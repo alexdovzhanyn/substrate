@@ -1,20 +1,14 @@
 use std::collections::HashSet;
 
-use crate::beliefs::BeliefStore;
-use crate::beliefs::belief::{Belief, RankedBelief};
-use crate::beliefs::candidate::{CandidateBelief, CandidateBeliefEmbeddingEntry};
-use crate::beliefs::embedding::BeliefEmbeddingEntry;
-use crate::semantic;
-use crate::{
-  debug,
-  error::AppResult,
-  info,
-  semantic::Reranker,
-  semantic::embedding::{EmbeddingDB, EmbeddingResolver},
-  trace,
-  util::Config,
+use crate::core::beliefs::BeliefStore;
+use crate::core::beliefs::belief::{Belief, RankedBelief};
+use crate::core::beliefs::candidate::{CandidateBelief, CandidateBeliefEmbeddingEntry};
+use crate::core::beliefs::embedding::BeliefEmbeddingEntry;
+use crate::core::semantic::{
+  Reranker,
+  embedding::{EmbeddingDB, EmbeddingResolver},
 };
-use fastembed::EmbeddingModel;
+use crate::{debug, error::AppResult, info, trace, util::Config};
 use futures_util::TryStreamExt;
 use lancedb::query::{ExecutableQuery, QueryBase, Select};
 
@@ -24,7 +18,8 @@ pub struct SemanticIndex {
   reranker: Reranker,
   semantic_top_k: usize,
   max_l2_distance: f32,
-  reranker_top_k: usize,
+  retrieval_limit: usize,
+  reranker_min_score: f32,
 }
 
 impl SemanticIndex {
@@ -42,7 +37,8 @@ impl SemanticIndex {
       reranker,
       semantic_top_k: config.retrieval.semantic_top_k,
       max_l2_distance: config.retrieval.max_l2_distance,
-      reranker_top_k: config.retrieval.reranker_top_k,
+      retrieval_limit: config.retrieval.retrieval_limit,
+      reranker_min_score: config.retrieval.reranker_min_score,
     })
   }
 
@@ -149,7 +145,7 @@ impl SemanticIndex {
   ) -> AppResult<Vec<CandidateBelief>> {
     let ranked = self.find_ranked_candidates(query, belief_store).await?;
 
-    let limit = std::cmp::max(limit, self.reranker_top_k);
+    let limit = std::cmp::max(limit, self.retrieval_limit);
 
     let candidates = ranked
       .iter()
@@ -230,10 +226,13 @@ impl SemanticIndex {
       }
     }
 
-    let mut candidates = semantically_similar_beliefs
+    let mut candidates: Vec<RankedBelief> = semantically_similar_beliefs
       .into_iter()
       .map(|belief_id| self.reranked_candidate_belief_from_id(&belief_id, query, belief_store))
-      .collect::<AppResult<Vec<_>>>()?;
+      .collect::<AppResult<Vec<_>>>()?
+      .into_iter()
+      .filter(|ranked| ranked.score >= self.reranker_min_score)
+      .collect();
 
     candidates.sort_unstable_by(|a, b| {
       b.score

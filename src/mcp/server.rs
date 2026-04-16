@@ -1,34 +1,23 @@
+use std::sync::Arc;
+
 use crate::info;
 use rmcp::transport::streamable_http_server::{
   StreamableHttpServerConfig, StreamableHttpService, session::local::LocalSessionManager,
 };
+use tokio::sync::Mutex;
 
-use tracing_subscriber::{
-  layer::SubscriberExt,
-  util::SubscriberInitExt,
-  {self},
-};
-
+use crate::core::SubstrateCore;
 use crate::error::AppResult;
-use crate::mcp::service::SubstrateService;
-use crate::state::AppState;
+use crate::mcp::service::MCPService;
 use crate::util::Config;
 
-pub async fn run(state: AppState, config: Config) -> AppResult<()> {
+pub async fn run(core: Arc<Mutex<SubstrateCore>>, config: Config) -> AppResult<()> {
   info!("[MCP] Starting server...");
-
-  tracing_subscriber::registry()
-    .with(
-      tracing_subscriber::EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| "info".to_string().into()),
-    )
-    .with(tracing_subscriber::fmt::layer())
-    .init();
 
   let ct = tokio_util::sync::CancellationToken::new();
 
   let service = StreamableHttpService::new(
-    move || Ok(SubstrateService::new(state.clone())),
+    move || Ok(MCPService::new(core.clone())),
     LocalSessionManager::default().into(),
     StreamableHttpServerConfig::default().with_cancellation_token(ct.child_token()),
   );

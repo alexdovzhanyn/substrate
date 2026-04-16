@@ -3,7 +3,7 @@ use std::fs::remove_dir_all;
 use lancedb::database::CreateTableMode;
 use lancedb::{Connection, connect};
 
-use crate::beliefs::embedding::BeliefEmbeddingEntry;
+use crate::core::beliefs::embedding::BeliefEmbeddingEntry;
 use crate::error::AppResult;
 use crate::info;
 use crate::util::{Config, get_storage_path};

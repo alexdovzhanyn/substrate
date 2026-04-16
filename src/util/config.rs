@@ -15,7 +15,8 @@ pub struct Config {
 pub struct RetrievalConfig {
   pub semantic_top_k: usize,
   pub max_l2_distance: f32,
-  pub reranker_top_k: usize,
+  pub retrieval_limit: usize,
+  pub reranker_min_score: f32,
 }
 
 #[derive(Debug, Deserialize, Clone)]

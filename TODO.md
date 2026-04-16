@@ -13,3 +13,4 @@ In no particular order:
     - Show reranking output
     - Show results after limit
 5. Belief validator scripting
+6. Task Session Contexts (short term task memory split across multiple agent runs)
