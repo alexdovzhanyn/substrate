@@ -4,6 +4,7 @@ use crate::core::SubstrateCore;
 use crate::error;
 use crate::error::AppResult;
 use crate::tui;
+use crate::tui::ConsoleTUI;
 use crate::util;
 use crate::util::Config;
 use crate::util::get_storage_path;
@@ -78,15 +79,24 @@ async fn command_serve(_args: &[String]) -> AppResult<()> {
   let core = Arc::new(Mutex::new(SubstrateCore::initialize(&config).await?));
 
   let mcp_core = core.clone();
+  let ipc_core = core.clone();
+
   let mcp_config = config.clone();
+  let ipc_config = config.clone();
 
   let mcp_handle = tokio::spawn(async move {
     if let Err(err) = crate::mcp::server::run(mcp_core, mcp_config).await {
-      error!("MCP server exited with error: {err}");
+      error!("[MCP] Server exited with error: {err}");
     }
   });
 
-  let _ = mcp_handle.await;
+  let ipc_handle = tokio::spawn(async move {
+    if let Err(err) = crate::ipc::server::run(ipc_core, ipc_config).await {
+      error!("[IPC] Server exited with error: {err}");
+    }
+  });
+
+  let (_mcp_result, _ipc_result) = tokio::try_join!(mcp_handle, ipc_handle)?;
 
   Ok(())
 }
@@ -168,9 +178,14 @@ async fn command_status() -> AppResult<()> {
 }
 
 async fn command_console() -> AppResult<()> {
-  ratatui::run(tui::app)?;
+  let terminal = ratatui::init();
 
-  Ok(())
+  let mut tui_app = ConsoleTUI::initialize(terminal);
+  let result = tui_app.run().await;
+
+  ratatui::restore();
+
+  result
 }
 
 async fn command_help() -> AppResult<()> {

@@ -1,7 +1,8 @@
 use std::fs::remove_file;
+use std::ops::Bound::{self, Excluded, Unbounded};
 use std::time::SystemTime;
 
-use redb::{Database, ReadableDatabase, TableDefinition};
+use redb::{Database, ReadableDatabase, ReadableTable, TableDefinition};
 use serde_json;
 
 use crate::core::beliefs::belief::{Belief, BeliefDraft};
@@ -91,6 +92,47 @@ impl BeliefStore {
     let belief: Belief = serde_json::from_slice(value.value())?;
 
     Ok(Some(belief))
+  }
+
+  pub fn get_beliefs(
+    &self,
+    limit: usize,
+    search: Option<String>,
+    after: Option<String>,
+  ) -> AppResult<Vec<Belief>> {
+    let mut beliefs = Vec::new();
+
+    let read_txn = self.connection.begin_read()?;
+    let table = read_txn.open_table(BELIEF_TABLE)?;
+
+    let range: (Bound<&str>, Bound<&str>) = match after.as_deref() {
+      Some(after) => (Excluded(after), Unbounded),
+      None => (Unbounded, Unbounded),
+    };
+
+    for row in table.range::<&str>(range)? {
+      if beliefs.len() == limit {
+        break;
+      }
+
+      let (_key, value) = row?;
+
+      let belief: Belief = serde_json::from_slice(value.value())?;
+
+      match search.as_ref() {
+        Some(search) => {
+          if belief.id.contains(search)
+            || belief.content.contains(search)
+            || belief.possible_queries.iter().any(|q| q.contains(search))
+          {
+            beliefs.push(belief);
+          }
+        }
+        None => beliefs.push(belief),
+      }
+    }
+
+    Ok(beliefs)
   }
 
   pub fn insert_draft(&self, draft: &BeliefDraft) -> AppResult<()> {
