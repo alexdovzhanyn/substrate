@@ -33,14 +33,18 @@ pub struct BeliefProposal {
   pub possible_queries: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BeliefDraft {
-  pub id: String,
-  pub content: String,
-  pub tags: Vec<String>,
-  pub possible_queries: Vec<String>,
+  pub belief: Belief,
   pub potential_conflicts: Vec<Belief>,
-  pub created_at: u64,
+}
+
+impl Deref for BeliefDraft {
+  type Target = Belief;
+
+  fn deref(&self) -> &Self::Target {
+    &self.belief
+  }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]

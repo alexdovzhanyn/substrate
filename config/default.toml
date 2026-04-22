@@ -6,9 +6,9 @@ reranker_min_score = 0.01
 
 [storage]
 lancedb_file = "substrate.lancedb"
-redb_file = "substrate.redb"
+sqlite_file = "substrate.sqlite"
 
-[mcp]
+[http]
 port = 4004
 
 [logging]

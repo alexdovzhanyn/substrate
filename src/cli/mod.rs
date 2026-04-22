@@ -3,7 +3,6 @@ use tokio::sync::Mutex;
 use crate::core::SubstrateCore;
 use crate::error;
 use crate::error::AppResult;
-use crate::tui;
 use crate::tui::ConsoleTUI;
 use crate::util;
 use crate::util::Config;
@@ -25,7 +24,7 @@ pub async fn route_command(args: Vec<String>) -> AppResult<()> {
     Some("logs") => command_logs(&args).await?,
     Some("flush") => command_flush().await?,
     Some("status") => command_status().await?,
-    Some("console") => command_console().await?,
+    Some("console") => command_console(&args).await?,
     _ => command_help().await?,
   }
 
@@ -78,15 +77,15 @@ async fn command_serve(_args: &[String]) -> AppResult<()> {
 
   let core = Arc::new(Mutex::new(SubstrateCore::initialize(&config).await?));
 
-  let mcp_core = core.clone();
+  let http_core = core.clone();
   let ipc_core = core.clone();
 
-  let mcp_config = config.clone();
+  let http_config = config.clone();
   let ipc_config = config.clone();
 
-  let mcp_handle = tokio::spawn(async move {
-    if let Err(err) = crate::mcp::server::run(mcp_core, mcp_config).await {
-      error!("[MCP] Server exited with error: {err}");
+  let http_handle = tokio::spawn(async move {
+    if let Err(err) = crate::http::server::run(http_core, http_config).await {
+      error!("[HTTP] Server exited with error: {err}");
     }
   });
 
@@ -96,7 +95,7 @@ async fn command_serve(_args: &[String]) -> AppResult<()> {
     }
   });
 
-  let (_mcp_result, _ipc_result) = tokio::try_join!(mcp_handle, ipc_handle)?;
+  let (_http_result, _ipc_result) = tokio::try_join!(http_handle, ipc_handle)?;
 
   Ok(())
 }
@@ -177,15 +176,21 @@ async fn command_status() -> AppResult<()> {
   Ok(())
 }
 
-async fn command_console() -> AppResult<()> {
-  let terminal = ratatui::init();
+async fn command_console(args: &[String]) -> AppResult<()> {
+  if args.iter().any(|arg| arg == "--cli") {
+    let terminal = ratatui::init();
 
-  let mut tui_app = ConsoleTUI::initialize(terminal);
-  let result = tui_app.run().await;
+    let mut tui_app = ConsoleTUI::initialize(terminal);
+    let result = tui_app.run().await;
 
-  ratatui::restore();
+    ratatui::restore();
 
-  result
+    return result;
+  }
+
+  webbrowser::open("http://localhost:4004/")?;
+
+  Ok(())
 }
 
 async fn command_help() -> AppResult<()> {
@@ -197,15 +202,19 @@ substrate [command] [options]
 
 \x1B[48;5;15;38;5;16;1m COMMANDS \x1B[0m\n
   start                                  Start the Substrate daemon as a background process
-  stop                                   Stop a running Substrate daemon
-  console                                Start an interactive terminal console UI to inspect Substrate data
-  status                                 Check whether Substrate is currently running
-  logs                                   View the logs produced by Substrate
-  flush                                  Clears all Substrate belief data
+    --foreground                         Starts the daemon in the foreground instead
 
-\x1B[48;5;15;38;5;16;1m OPTIONS \x1B[0m\n
-  --foreground                           When passed with the start command, starts the daemon in the foreground instead
-  --clear                                When passed with the logs command, clears the log file
+  stop                                   Stop a running Substrate daemon
+
+  console                                Launch the management console UI
+    --cli                                Start the console in TUI mode instead
+
+  status                                 Check whether Substrate is currently running
+
+  logs                                   View the logs produced by Substrate
+    --clear                              Clears the log file
+
+  flush                                  Clears all Substrate belief data
 "
   );
 

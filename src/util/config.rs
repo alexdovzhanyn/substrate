@@ -7,7 +7,7 @@ use crate::error::AppResult;
 pub struct Config {
   pub retrieval: RetrievalConfig,
   pub storage: StorageConfig,
-  pub mcp: McpConfig,
+  pub http: HttpConfig,
   pub logging: LoggingConfig,
 }
 
@@ -22,11 +22,11 @@ pub struct RetrievalConfig {
 #[derive(Debug, Deserialize, Clone)]
 pub struct StorageConfig {
   pub lancedb_file: String,
-  pub redb_file: String,
+  pub sqlite_file: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct McpConfig {
+pub struct HttpConfig {
   pub port: usize,
 }
 

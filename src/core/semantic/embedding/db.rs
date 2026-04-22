@@ -59,7 +59,11 @@ impl EmbeddingDB {
   }
 
   pub fn flush(config: &Config) -> AppResult<()> {
-    remove_dir_all(get_storage_path(&config.storage.lancedb_file))?;
+    let path = get_storage_path(&config.storage.lancedb_file);
+
+    if std::fs::exists(&path)? {
+      remove_dir_all(path)?;
+    }
 
     Ok(())
   }

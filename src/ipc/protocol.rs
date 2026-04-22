@@ -8,7 +8,7 @@ pub enum IPCRequest {
   ListBeliefs {
     search: Option<String>,
     limit: Option<usize>,
-    after: Option<String>,
+    offset: Option<usize>,
   },
   GetBelief {
     id: String,

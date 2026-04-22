@@ -78,7 +78,7 @@ impl ConsoleTUI {
       .send(IPCRequest::ListBeliefs {
         search: None,
         limit: None,
-        after: None,
+        offset: None,
       })
       .await?;
 
@@ -163,8 +163,11 @@ impl ConsoleTUI {
         belief.content.clone().cyan().into(),
         Line::from(""),
         " Possible Queries ".on_magenta().bold().into(),
-        Line::from_iter(belief.possible_queries.iter().map(|q| format!("'{}'", q))),
       ];
+
+      for query in &belief.possible_queries {
+        detail_text.push(format!("• {}", query).into());
+      }
 
       let created_at: DateTime<Utc> =
         (SystemTime::UNIX_EPOCH + Duration::from_secs(belief.created_at)).into();

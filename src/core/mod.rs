@@ -118,21 +118,24 @@ impl SubstrateCore {
 
       self.semantic_index.index(&belief).await?;
 
-      self.belief_store.insert_belief(&belief)?;
+      self.belief_store.insert_belief(&belief, false)?;
 
       return Ok(None);
     }
 
     let draft = BeliefDraft {
-      id: draft_id,
-      content: proposal.content,
-      tags,
-      possible_queries,
+      belief: Belief {
+        id: draft_id,
+        content: proposal.content,
+        tags,
+        possible_queries,
+        created_at: time_now,
+        updated_at: time_now,
+      },
       potential_conflicts,
-      created_at: time_now,
     };
 
-    self.belief_store.insert_draft(&draft)?;
+    self.belief_store.insert_belief(&draft, true)?;
 
     Ok(Some(draft))
   }
@@ -142,9 +145,9 @@ impl SubstrateCore {
       .duration_since(SystemTime::UNIX_EPOCH)?
       .as_secs();
 
-    let draft = self
+    let mut draft = self
       .belief_store
-      .get_draft(&commitment.draft_id)?
+      .get_belief(&commitment.draft_id, true)?
       .ok_or_else(|| "No matching draft ID found")?;
 
     let mut should_promote_draft = true;
@@ -178,21 +181,16 @@ impl SubstrateCore {
     }
 
     if should_promote_draft {
-      let belief = Belief {
-        id: draft.id.clone(),
-        content: draft.content,
-        tags: draft.tags,
-        possible_queries: draft.possible_queries,
-        created_at: time_now,
-        updated_at: time_now,
-      };
+      draft.updated_at = time_now;
 
-      self.semantic_index.index(&belief).await?;
+      self.semantic_index.index(&draft).await?;
 
-      self.belief_store.insert_belief(&belief)?;
+      self.belief_store.promote_draft(&draft.id)?;
+
+      return Ok(());
     }
 
-    self.belief_store.remove_draft(&draft.id)?;
+    self.belief_store.remove_belief(&draft.id)?;
 
     Ok(())
   }
@@ -209,7 +207,7 @@ impl SubstrateCore {
   async fn add_belief_query(&mut self, belief_id: &str, query: &str) -> AppResult<()> {
     let mut belief = self
       .belief_store
-      .get_belief(belief_id)?
+      .get_belief(belief_id, false)?
       .ok_or_else(|| format!("Belief not found: {}", belief_id))?;
 
     self

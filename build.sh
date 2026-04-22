@@ -27,4 +27,7 @@ fi
 mkdir -p "$TARGET_DIR/models"
 rsync -a --delete models/ "$TARGET_DIR/models/"
 
+mkdir -p "$TARGET_DIR/web"
+rsync -a --delete web/dist/ "$TARGET_DIR/web/"
+
 echo "Build complete: $TARGET_DIR"

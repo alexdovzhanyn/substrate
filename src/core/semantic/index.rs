@@ -145,7 +145,7 @@ impl SemanticIndex {
   ) -> AppResult<Vec<CandidateBelief>> {
     let ranked = self.find_ranked_candidates(query, belief_store).await?;
 
-    let limit = std::cmp::max(limit, self.retrieval_limit);
+    let limit = std::cmp::max(1, std::cmp::min(limit, self.retrieval_limit));
 
     let candidates = ranked
       .iter()
@@ -250,7 +250,7 @@ impl SemanticIndex {
     belief_store: &BeliefStore,
   ) -> AppResult<RankedBelief> {
     let belief = belief_store
-      .get_belief(belief_id)?
+      .get_belief(belief_id, false)?
       .ok_or_else(|| format!("Missing belief in store for id {}", belief_id))?;
 
     let belief_as_passage = format!(

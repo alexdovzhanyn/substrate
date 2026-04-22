@@ -1,6 +1,7 @@
 mod cli;
 mod core;
 mod error;
+mod http;
 mod ipc;
 mod macros;
 mod mcp;

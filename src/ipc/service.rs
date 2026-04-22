@@ -12,8 +12,8 @@ pub async fn handle_request(request: IPCRequest, core: Arc<Mutex<SubstrateCore>>
     IPCRequest::ListBeliefs {
       search,
       limit,
-      after,
-    } => list_beliefs(search, limit, after, &core).await,
+      offset,
+    } => list_beliefs(search, limit, offset, &core).await,
     _ => IPCResponse::Error {
       message: String::from("Uknown action"),
     },
@@ -23,14 +23,14 @@ pub async fn handle_request(request: IPCRequest, core: Arc<Mutex<SubstrateCore>>
 pub async fn list_beliefs(
   search: Option<String>,
   limit: Option<usize>,
-  after: Option<String>,
+  offset: Option<usize>,
   core: &Arc<Mutex<SubstrateCore>>,
 ) -> IPCResponse {
   let res = core
     .lock()
     .await
     .belief_store
-    .get_beliefs(limit.unwrap_or(50), search, after);
+    .get_beliefs(limit.unwrap_or(50), search, offset);
 
   match res {
     Ok(beliefs) => IPCResponse::ListBeliefs { beliefs },
