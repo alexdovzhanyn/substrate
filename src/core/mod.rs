@@ -106,16 +106,17 @@ impl SubstrateCore {
       Err(_) => panic!("Could not get system time!"),
     };
 
-    if potential_conflicts.is_empty() {
-      let belief = Belief {
-        id: draft_id,
-        content: proposal.content,
-        tags,
-        possible_queries,
-        created_at: time_now,
-        updated_at: time_now,
-      };
+    let belief = Belief {
+      id: draft_id,
+      content: proposal.content,
+      tags,
+      possible_queries,
+      created_at: time_now,
+      updated_at: time_now,
+      created_by: proposal.created_by,
+    };
 
+    if potential_conflicts.is_empty() {
       self.semantic_index.index(&belief).await?;
 
       self.belief_store.insert_belief(&belief, false)?;
@@ -124,14 +125,7 @@ impl SubstrateCore {
     }
 
     let draft = BeliefDraft {
-      belief: Belief {
-        id: draft_id,
-        content: proposal.content,
-        tags,
-        possible_queries,
-        created_at: time_now,
-        updated_at: time_now,
-      },
+      belief,
       potential_conflicts,
     };
 

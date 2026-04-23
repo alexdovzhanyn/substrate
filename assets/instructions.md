@@ -280,6 +280,7 @@ Input fields:
 - `content`: one complete, self-contained belief statement
 - `possible_queries`: 3–6 realistic retrieval phrasings
 - `tags`: 1–5 lightweight categorical labels
+- `created_by`: your human readable model name
 
 The `propose` tool has two possible outcomes:
 

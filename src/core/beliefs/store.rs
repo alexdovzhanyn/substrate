@@ -33,7 +33,8 @@ impl BeliefStore {
          content          TEXT NOT NULL,
          is_draft         BOOLEAN DEFAULT FALSE,
          created_at       INTEGER NOT NULL,
-         updated_at       INTEGER NOT NULL
+         updated_at       INTEGER NOT NULL,
+         created_by       TEXT
        );
 
        CREATE TABLE IF NOT EXISTS belief_tags (
@@ -64,13 +65,14 @@ impl BeliefStore {
     let transaction = connection.transaction()?;
 
     transaction.execute(
-      "INSERT INTO beliefs (id, content, created_at, updated_at, is_draft) VALUES (?1, ?2, ?3, ?4, ?5)",
+      "INSERT INTO beliefs (id, content, created_at, updated_at, is_draft, created_by) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
       (
         &belief.id,
         &belief.content,
         belief.created_at as i64,
         belief.updated_at as i64,
-        is_draft
+        is_draft,
+        &belief.created_by
       ),
     )?;
 
@@ -157,7 +159,7 @@ impl BeliefStore {
 
     let belief_row = connection
       .query_row(
-        "SELECT id, content, created_at, updated_at FROM beliefs WHERE id = :belief_id and is_draft = :is_draft",
+        "SELECT id, content, created_at, updated_at, created_by FROM beliefs WHERE id = :belief_id and is_draft = :is_draft",
         named_params! {
           ":belief_id": belief_id,
           ":is_draft": is_draft
@@ -168,6 +170,7 @@ impl BeliefStore {
             content: row.get(1)?,
             created_at: row.get(2)?,
             updated_at: row.get(3)?,
+            created_by: row.get(4)?
           })
         },
       )
@@ -195,6 +198,7 @@ impl BeliefStore {
       tags,
       created_at: belief_row.created_at as u64,
       updated_at: belief_row.updated_at as u64,
+      created_by: belief_row.created_by,
     };
 
     Ok(Some(belief))
@@ -211,7 +215,7 @@ impl BeliefStore {
     let belief_rows = connection
       .prepare(
         "
-        SELECT b.id, b.content, b.created_at, b.updated_at FROM beliefs b 
+        SELECT b.id, b.content, b.created_at, b.updated_at, b.created_by FROM beliefs b 
         JOIN (
           SELECT id as belief_id FROM beliefs
           WHERE content LIKE '%' || ?1 || '%'
@@ -244,6 +248,7 @@ impl BeliefStore {
             content: row.get(1)?,
             created_at: row.get(2)?,
             updated_at: row.get(3)?,
+            created_by: row.get(4)?,
           })
         },
       )?
@@ -268,6 +273,7 @@ impl BeliefStore {
           possible_queries: Vec::new(),
           created_at: row.created_at as u64,
           updated_at: row.updated_at as u64,
+          created_by: row.created_by,
         },
       );
     }
@@ -341,4 +347,5 @@ struct BeliefRow {
   content: String,
   created_at: i64,
   updated_at: i64,
+  created_by: String,
 }

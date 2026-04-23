@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-import { apiFetchBeliefs } from '@substrate/services/belief.service'
+import { apiFetchBeliefs, BELIEF_PAGE_SIZE } from '@substrate/services/belief.service'
 import { showNotification } from '@substrate/redux/notificationSlice'
 
 export const fetchBeliefs = createAsyncThunk(
@@ -25,6 +25,7 @@ export const fetchBeliefs = createAsyncThunk(
 
 const initialState = {
   records: [],
+  hasMore: true,
   isLoading: false
 }
 
@@ -37,9 +38,17 @@ export const beliefSlice = createSlice({
       .addCase(fetchBeliefs.pending, state => {
         state.isLoading = true
       })
-      .addCase(fetchBeliefs.fulfilled, (state, { payload }) => {
+      .addCase(fetchBeliefs.fulfilled, (state, { payload, meta }) => {
         state.isLoading = false
-        state.records = payload.beliefs
+
+        console.log(meta)
+        if (meta.arg.page == 1) {
+          state.records = payload.beliefs
+        } else {
+          state.records = [ ...state.records, ...payload.beliefs ]
+        }
+
+        state.hasMore = payload.beliefs.length >= BELIEF_PAGE_SIZE 
       })
       .addCase(fetchBeliefs.rejected, state => {
         state.isLoading = false

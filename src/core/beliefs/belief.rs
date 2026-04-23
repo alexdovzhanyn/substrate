@@ -11,6 +11,7 @@ pub struct Belief {
   pub possible_queries: Vec<String>,
   pub created_at: u64,
   pub updated_at: u64,
+  pub created_by: String,
 }
 
 pub struct RankedBelief {
@@ -31,6 +32,7 @@ pub struct BeliefProposal {
   pub content: String,
   pub tags: Vec<String>,
   pub possible_queries: Vec<String>,
+  pub created_by: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
