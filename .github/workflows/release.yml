@@ -98,11 +98,13 @@ jobs:
 
           hf download BAAI/bge-small-en-v1.5 \
             --local-dir models/bge-small-en-v1.5 \
-            --exclude "*.safetensors" "pytorch_model.bin"
+            --exclude "*.safetensors" \
+            --exclude "pytorch_model.bin"
 
           hf download BAAI/bge-reranker-base \
             --local-dir models/bge-reranker-base \
-            --exclude "*.safetensors" "pytorch_model.bin"
+            --exclude "*.safetensors" \
+            --exclude "pytorch_model.bin"
 
       - name: Check Rust formatting
         run: cargo fmt --all -- --check
