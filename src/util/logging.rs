@@ -1,5 +1,4 @@
 use std::fmt;
-use std::fs::File;
 use std::sync::OnceLock;
 
 use chrono::Local;

@@ -26,7 +26,7 @@ impl SemanticIndex {
   pub async fn initialize(config: &Config) -> AppResult<Self> {
     info!("[SemanticIndex] Initializing...");
 
-    let db = EmbeddingDB::initialize(&config).await?;
+    let db = EmbeddingDB::initialize(config).await?;
     let embedding_resolver = EmbeddingResolver::initialize()?;
     let reranker = Reranker::initialize()?;
 
@@ -64,7 +64,7 @@ impl SemanticIndex {
 
     let embedding_entries: Vec<BeliefEmbeddingEntry> = embedding_entries_to_create
       .iter()
-      .zip(embedding_vectors.into_iter())
+      .zip(embedding_vectors)
       .map(
         |((belief_id, embedding_source, embedding_text), vector)| BeliefEmbeddingEntry {
           belief_id: belief_id.to_string(),
@@ -108,7 +108,7 @@ impl SemanticIndex {
       vector,
     };
 
-    let batch = BeliefEmbeddingEntry::to_record_batch(&vec![embedding_entry])?;
+    let batch = BeliefEmbeddingEntry::to_record_batch(&[embedding_entry])?;
 
     let table = self
       .db
@@ -180,7 +180,7 @@ impl SemanticIndex {
       .execute()
       .await?;
 
-    let query_vectors = self.embedding_resolver.embed(&query)?;
+    let query_vectors = self.embedding_resolver.embed(query)?;
 
     let semantic_top_k = self.semantic_top_k;
 

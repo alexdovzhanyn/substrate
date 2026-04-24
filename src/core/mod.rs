@@ -25,8 +25,8 @@ pub struct SubstrateCore {
 
 impl SubstrateCore {
   pub async fn initialize(config: &Config) -> AppResult<Self> {
-    let semantic_index = semantic::SemanticIndex::initialize(&config).await?;
-    let belief_store = beliefs::BeliefStore::initialize(&config)?;
+    let semantic_index = semantic::SemanticIndex::initialize(config).await?;
+    let belief_store = beliefs::BeliefStore::initialize(config)?;
 
     Ok(Self {
       semantic_index,
