@@ -22,10 +22,12 @@ jobs:
           - target: aarch64-apple-darwin
             runner: macos-14
             ort_archive_arch: osx-arm64
+            ort_version: "1.25.0"
 
           - target: x86_64-apple-darwin
             runner: macos-15-intel
             ort_archive_arch: osx-x64
+            ort_version: "1.26.0"
 
     steps:
       - name: Checkout repository
@@ -42,7 +44,7 @@ jobs:
       - name: Install ONNX Runtime
         shell: bash
         run: |
-          ORT_VERSION="1.25.0"
+          ORT_VERSION="${{ matrix.ort_version }}"
           ORT_ARCHIVE="onnxruntime-${{ matrix.ort_archive_arch }}-${ORT_VERSION}.tgz"
 
           if [ "${{ matrix.target }}" = "x86_64-apple-darwin" ]; then
@@ -58,14 +60,21 @@ jobs:
 
           tar -xzf "$ORT_ARCHIVE" -C vendor/onnxruntime --strip-components=1
 
-          ln -sf "libonnxruntime.${ORT_VERSION}.dylib" \
-            vendor/onnxruntime/lib/libonnxruntime.dylib
+          ACTUAL_DYLIB="$(find vendor/onnxruntime/lib -name 'libonnxruntime.*.dylib' ! -name 'libonnxruntime.dylib' | head -n 1)"
+
+          if [ -z "$ACTUAL_DYLIB" ]; then
+            echo "Could not find versioned libonnxruntime dylib"
+            ls -lh vendor/onnxruntime/lib
+            exit 1
+          fi
+
+          ln -sf "$(basename "$ACTUAL_DYLIB")" vendor/onnxruntime/lib/libonnxruntime.dylib
 
           echo "ORT_VERSION=$ORT_VERSION" >> "$GITHUB_ENV"
           echo "ORT_DYLIB_PATH=$PWD/vendor/onnxruntime/lib/libonnxruntime.dylib" >> "$GITHUB_ENV"
 
           ls -lh vendor/onnxruntime/lib
-          file vendor/onnxruntime/lib/libonnxruntime.${ORT_VERSION}.dylib
+          file "$ACTUAL_DYLIB"
 
       - name: Install Node.js
         uses: actions/setup-node@v4
