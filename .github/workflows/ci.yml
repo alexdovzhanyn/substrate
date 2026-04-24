@@ -30,7 +30,7 @@ jobs:
           mkdir -p vendor/onnxruntime
 
           echo "Downloading ${ORT_URL}"
-          curl -L "$ORT_URL" -o "$ORT_ARCHIVE"
+          curl -fL "$ORT_URL" -o "$ORT_ARCHIVE"
 
           tar -xzf "$ORT_ARCHIVE" -C vendor/onnxruntime --strip-components=1
 
@@ -56,7 +56,7 @@ jobs:
         run: npm --prefix web run build
 
       - name: Install Hugging Face CLI
-        run: python3 -m pip install --upgrade huggingface_hub[cli]
+        run: brew install huggingface-cli
 
       - name: Download models
         run: |
