@@ -1,6 +1,6 @@
 name: Release
 
-on:
+"on":
   workflow_dispatch:
     inputs:
       version:
@@ -22,7 +22,7 @@ jobs:
           - target: aarch64-apple-darwin
             runner: macos-14
           - target: x86_64-apple-darwin
-            runner: macos-13
+            runner: macos-15-intel
 
     steps:
       - name: Checkout repository
@@ -32,6 +32,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+
+      - name: Install protobuf compiler
+        run: brew install protobuf
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -56,10 +59,19 @@ jobs:
             --exclude "*.safetensors" "pytorch_model.bin"
 
       - name: Install web dependencies
-        run: npm --prefix web ci
+        run: npm --prefix web ci --include=optional
 
       - name: Build web app
         run: npm --prefix web run build
+
+      - name: Check Rust formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run Clippy
+        run: cargo clippy --target ${{ matrix.target }} --all-targets --all-features
+
+      - name: Run Rust tests
+        run: SUBSTRATE_HOME="$PWD" cargo test --target ${{ matrix.target }} --all-features
 
       - name: Build Rust release binary
         run: cargo build --release --target ${{ matrix.target }}
@@ -95,7 +107,7 @@ jobs:
           fi
 
           if [ -f LICENSE.md ]; then
-            cp LICENSE "$PACKAGE_DIR/LICENSE.md"
+            cp LICENSE.md "$PACKAGE_DIR/LICENSE.md"
           fi
 
           tar -czf "$DIST_ROOT/$PACKAGE_NAME.tar.gz" -C "$DIST_ROOT" "$PACKAGE_NAME"

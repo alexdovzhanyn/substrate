@@ -1,6 +1,6 @@
 name: CI
 
-on:
+"on":
   push:
     branches:
       - master
@@ -20,6 +20,28 @@ jobs:
       - name: Install protobuf compiler
         run: brew install protobuf
 
+      - name: Install ONNX Runtime
+        shell: bash
+        run: |
+          ORT_VERSION="1.26.0"
+          ORT_ARCHIVE="onnxruntime-osx-arm64-${ORT_VERSION}.tgz"
+          ORT_URL="https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/${ORT_ARCHIVE}"
+
+          mkdir -p vendor/onnxruntime
+
+          echo "Downloading ${ORT_URL}"
+          curl -L "$ORT_URL" -o "$ORT_ARCHIVE"
+
+          tar -xzf "$ORT_ARCHIVE" -C vendor/onnxruntime --strip-components=1
+
+          ln -sf "libonnxruntime.${ORT_VERSION}.dylib" \
+            vendor/onnxruntime/lib/libonnxruntime.dylib
+
+          echo "ORT_DYLIB_PATH=$PWD/vendor/onnxruntime/lib/libonnxruntime.dylib" >> "$GITHUB_ENV"
+
+          ls -lh vendor/onnxruntime/lib
+          file vendor/onnxruntime/lib/libonnxruntime.${ORT_VERSION}.dylib
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
@@ -28,10 +50,25 @@ jobs:
           cache-dependency-path: web/package-lock.json
 
       - name: Install web dependencies
-        run: npm --prefix web ci
+        run: npm --prefix web ci --include=optional
 
       - name: Build web app
         run: npm --prefix web run build
+
+      - name: Install Hugging Face CLI
+        run: python3 -m pip install --upgrade huggingface_hub[cli]
+
+      - name: Download models
+        run: |
+          mkdir -p models
+
+          hf download BAAI/bge-small-en-v1.5 \
+            --local-dir models/bge-small-en-v1.5 \
+            --exclude "*.safetensors" "pytorch_model.bin"
+
+          hf download BAAI/bge-reranker-base \
+            --local-dir models/bge-reranker-base \
+            --exclude "*.safetensors" "pytorch_model.bin"
 
       - name: Check Rust formatting
         run: cargo fmt --all -- --check
@@ -40,7 +77,7 @@ jobs:
         run: cargo clippy --all-targets --all-features
 
       - name: Run Rust tests
-        run: cargo test --all-features
+        run: SUBSTRATE_HOME="$PWD" cargo test --all-features
 
       - name: Build Rust binary
         run: cargo build
