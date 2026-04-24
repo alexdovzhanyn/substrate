@@ -440,6 +440,18 @@ Example (store):
 - toolchain version
 - CI runtime
 
+## User-provided canonical references → cache rule
+
+If the user provides a **canonical documentation link** (internal or external) and the agent uses that reference to 
+**decide, justify, or implement** behavior (API semantics, query syntax, operator precedence, edge-case rules, etc.), the agent must:
+
+- **Propose a Substrate belief immediately** capturing the *minimal reusable rule(s)* derived from the reference
+- Include the **canonical link** in the belief content
+- Add **3–6 realistic possible_queries** that a future agent would ask before knowing the answer
+
+This rule applies even if no WebSearch was used and even if the fact feels “generic”; if it is relied upon for work 
+in this environment, it should be cached.
+
 ## Code Generation Preference Rule
 
 Before writing or modifying code, query Substrate for relevant user preferences.
