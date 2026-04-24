@@ -23,7 +23,7 @@ jobs:
       - name: Install ONNX Runtime
         shell: bash
         run: |
-          ORT_VERSION="1.26.0"
+          ORT_VERSION="1.25.0"
           ORT_ARCHIVE="onnxruntime-osx-arm64-${ORT_VERSION}.tgz"
           ORT_URL="https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/${ORT_ARCHIVE}"
 
