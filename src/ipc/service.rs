@@ -43,4 +43,3 @@ fn to_ipc_err<E: std::fmt::Display>(e: E) -> IPCResponse {
     message: e.to_string(),
   }
 }
-
