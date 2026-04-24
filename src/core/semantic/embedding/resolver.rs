@@ -40,10 +40,45 @@ impl EmbeddingResolver {
   fn get_model_path() -> std::path::PathBuf {
     let model_dir = "models/bge-small-en-v1.5".to_string();
 
+    if let Ok(substrate_home) = std::env::var("SUBSTRATE_HOME") {
+      return std::path::PathBuf::from(substrate_home).join(model_dir);
+    }
+
     std::env::current_exe()
       .unwrap()
       .parent()
       .unwrap()
       .join(model_dir)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn loads_local_model_and_creates_embedding() {
+    let mut resolver = EmbeddingResolver::initialize()
+      .expect("embedding resolver should initialize using local model files");
+
+    let embedding = resolver
+      .embed_single("Substrate stores reusable context for AI agents.".to_string())
+      .expect("embedding resolver should create an embedding");
+
+    assert_eq!(
+      embedding.len(),
+      384,
+      "BGE small English v1.5 should produce 384-dimensional embeddings"
+    );
+
+    assert!(
+      embedding.iter().all(|value| value.is_finite()),
+      "embedding should only contain finite values"
+    );
+
+    assert!(
+      embedding.iter().any(|value| *value != 0.0),
+      "embedding should not be all zeroes"
+    );
   }
 }
