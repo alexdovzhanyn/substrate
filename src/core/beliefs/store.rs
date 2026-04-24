@@ -322,7 +322,7 @@ impl BeliefStore {
 
   pub fn promote_draft(&self, draft_id: &str) -> AppResult<()> {
     self.connection.lock().unwrap().execute(
-      "UPDATE beliefs SET (is_draft = FALSE) WHERE id = ?1",
+      "UPDATE beliefs SET is_draft = FALSE WHERE id = ?1",
       [draft_id],
     )?;
 

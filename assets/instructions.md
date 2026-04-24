@@ -488,6 +488,30 @@ Bad:
 - `start project`
 - `how this repo starts`
 
+### Possible query quality
+
+`possible_queries` are not summaries, labels, tags, or compressed versions of the belief.
+
+They are realistic search phrases a future agent might issue **before it knows the stored answer**.
+
+Write each possible query from the perspective of an agent with an unresolved information need.
+
+Good `possible_queries` should often use broad, natural, answer-seeking language:
+- "what quote style should frontend code use"
+- "frontend quotation mark preference"
+- "should frontend code use single quotes or double quotes"
+- "how should I handle quote formatting churn"
+- "code formatting preference for quotes in frontend files"
+
+Bad `possible_queries` merely restate the known answer:
+- "single quotes preference frontend"
+- "avoid quote churn formatting rule"
+- "quote style consistency within file"
+
+Rule of thumb:
+
+If the query sounds like it already knows the answer, rewrite it as the question someone would ask before knowing the answer.
+
 ---
 
 ## Source of Truth Rule

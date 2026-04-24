@@ -142,7 +142,7 @@ impl SubstrateCore {
     let mut draft = self
       .belief_store
       .get_belief(&commitment.draft_id, true)?
-      .ok_or_else(|| "No matching draft ID found")?;
+      .ok_or_else(|| "No matching draft ID".to_string())?;
 
     let mut should_promote_draft = true;
 
