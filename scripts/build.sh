@@ -3,13 +3,22 @@ set -euo pipefail
 
 PROFILE="${1:-debug}"
 
+CARGO_TARGET_ARGS=""
+
+if [ "${SUBSTRATE_LOCAL_X86_BUILD:-0}" = "1" ]; then
+  CARGO_TARGET_ARGS="--target x86_64-apple-darwin"
+
+  export ORT_DYLIB_PATH="$PWD/vendor/onnxruntime/build/MacOS/Release/libonnxruntime.1.26.0.dylib"
+  export MACOSX_DEPLOYMENT_TARGET="12.3"
+fi
+
 case "$PROFILE" in
   debug)
-    cargo build
+    cargo build $CARGO_TARGET_ARGS
     PROFILE_DIR="debug"
     ;;
   release)
-    cargo build --release
+    cargo build --release $CARGO_TARGET_ARGS
     PROFILE_DIR="release"
     ;;
   *)
@@ -18,7 +27,7 @@ case "$PROFILE" in
     ;;
 esac
 
-if [ -d "target/x86_64-apple-darwin/$PROFILE_DIR" ]; then
+if [ "${SUBSTRATE_LOCAL_X86_BUILD:-0}" = "1" ]; then
   TARGET_DIR="target/x86_64-apple-darwin/$PROFILE_DIR"
 else
   TARGET_DIR="target/$PROFILE_DIR"
