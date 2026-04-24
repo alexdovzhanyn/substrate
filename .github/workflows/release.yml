@@ -1,6 +1,6 @@
 name: Release
 
-"on":
+on:
   workflow_dispatch:
     inputs:
       version:
@@ -21,8 +21,11 @@ jobs:
         include:
           - target: aarch64-apple-darwin
             runner: macos-14
+            ort_archive_arch: osx-arm64
+
           - target: x86_64-apple-darwin
             runner: macos-15-intel
+            ort_archive_arch: osx-x64
 
     steps:
       - name: Checkout repository
@@ -36,6 +39,29 @@ jobs:
       - name: Install protobuf compiler
         run: brew install protobuf
 
+      - name: Install ONNX Runtime
+        shell: bash
+        run: |
+          ORT_VERSION="1.25.0"
+          ORT_ARCHIVE="onnxruntime-${{ matrix.ort_archive_arch }}-${ORT_VERSION}.tgz"
+          ORT_URL="https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/${ORT_ARCHIVE}"
+
+          mkdir -p vendor/onnxruntime
+
+          echo "Downloading ${ORT_URL}"
+          curl -fL "$ORT_URL" -o "$ORT_ARCHIVE"
+
+          tar -xzf "$ORT_ARCHIVE" -C vendor/onnxruntime --strip-components=1
+
+          ln -sf "libonnxruntime.${ORT_VERSION}.dylib" \
+            vendor/onnxruntime/lib/libonnxruntime.dylib
+
+          echo "ORT_VERSION=$ORT_VERSION" >> "$GITHUB_ENV"
+          echo "ORT_DYLIB_PATH=$PWD/vendor/onnxruntime/lib/libonnxruntime.dylib" >> "$GITHUB_ENV"
+
+          ls -lh vendor/onnxruntime/lib
+          file vendor/onnxruntime/lib/libonnxruntime.${ORT_VERSION}.dylib
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
@@ -43,8 +69,14 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      - name: Install web dependencies
+        run: npm --prefix web ci --include=optional
+
+      - name: Build web app
+        run: npm --prefix web run build
+
       - name: Install Hugging Face CLI
-        run: python3 -m pip install --upgrade huggingface_hub[cli]
+        run: brew install huggingface-cli
 
       - name: Download models
         run: |
@@ -57,12 +89,6 @@ jobs:
           hf download BAAI/bge-reranker-base \
             --local-dir models/bge-reranker-base \
             --exclude "*.safetensors" "pytorch_model.bin"
-
-      - name: Install web dependencies
-        run: npm --prefix web ci --include=optional
-
-      - name: Build web app
-        run: npm --prefix web run build
 
       - name: Check Rust formatting
         run: cargo fmt --all -- --check
@@ -102,12 +128,17 @@ jobs:
           mkdir -p "$PACKAGE_DIR/web"
           rsync -a --delete web/dist/ "$PACKAGE_DIR/web/"
 
+          mkdir -p "$PACKAGE_DIR/vendor"
+          rsync -a --delete vendor/onnxruntime/ "$PACKAGE_DIR/vendor/onnxruntime/"
+
           if [ -f README.md ]; then
             cp README.md "$PACKAGE_DIR/README.md"
           fi
 
           if [ -f LICENSE.md ]; then
             cp LICENSE.md "$PACKAGE_DIR/LICENSE.md"
+          elif [ -f LICENSE ]; then
+            cp LICENSE "$PACKAGE_DIR/LICENSE.md"
           fi
 
           tar -czf "$DIST_ROOT/$PACKAGE_NAME.tar.gz" -C "$DIST_ROOT" "$PACKAGE_NAME"
