@@ -40,7 +40,10 @@ echo "Copying runtime files..."
 cp "$TARGET_DIR/$BINARY_NAME" "$PACKAGE_DIR/$BINARY_NAME"
 
 mkdir -p "$PACKAGE_DIR/models"
-rsync -a --delete models/ "$PACKAGE_DIR/models/"
+rsync -a --delete \
+  --exclude='*.safetensors' \
+  --exclude='pytorch_model.bin' \
+  models/ "$PACKAGE_DIR/models/"
 
 mkdir -p "$PACKAGE_DIR/web"
 rsync -a --delete web/dist/ "$PACKAGE_DIR/web/"
