@@ -44,7 +44,12 @@ jobs:
         run: |
           ORT_VERSION="1.25.0"
           ORT_ARCHIVE="onnxruntime-${{ matrix.ort_archive_arch }}-${ORT_VERSION}.tgz"
-          ORT_URL="https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/${ORT_ARCHIVE}"
+
+          if [ "${{ matrix.target }}" = "x86_64-apple-darwin" ]; then
+            ORT_URL="https://github.com/alexdovzhanyn/substrate/releases/download/0.1.1/onnxruntime-osx-x64-1.25.0.tgz"
+          else
+            ORT_URL="https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/${ORT_ARCHIVE}"
+          fi
 
           mkdir -p vendor/onnxruntime
 
@@ -137,8 +142,6 @@ jobs:
 
           if [ -f LICENSE.md ]; then
             cp LICENSE.md "$PACKAGE_DIR/LICENSE.md"
-          elif [ -f LICENSE ]; then
-            cp LICENSE "$PACKAGE_DIR/LICENSE.md"
           fi
 
           tar -czf "$DIST_ROOT/$PACKAGE_NAME.tar.gz" -C "$DIST_ROOT" "$PACKAGE_NAME"
