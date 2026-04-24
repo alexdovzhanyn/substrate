@@ -2,5 +2,6 @@
 
 /target
 /vendor
+/dist
 /models/*
 !/models/.gitkeep

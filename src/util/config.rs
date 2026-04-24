@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use std::fs;
 
-use crate::error::AppResult;
+use crate::{error::AppResult, util::get_storage_path};
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
@@ -36,7 +36,8 @@ pub struct LoggingConfig {
 }
 
 impl Config {
-  pub fn load(path: &str) -> AppResult<Self> {
+  pub fn load() -> AppResult<Self> {
+    let path = get_storage_path("config.toml");
     let contents = fs::read_to_string(path)?;
     let config: Self = toml::from_str(&contents)?;
 

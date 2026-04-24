@@ -190,7 +190,7 @@ impl SubstrateCore {
   }
 
   pub async fn flush() -> AppResult<()> {
-    let config = Config::load("config/default.toml")?;
+    let config = Config::load()?;
 
     SemanticIndex::flush(&config).await?;
     BeliefStore::flush(&config)?;

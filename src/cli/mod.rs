@@ -25,6 +25,7 @@ pub async fn route_command(args: Vec<String>) -> AppResult<()> {
     Some("flush") => command_flush().await?,
     Some("status") => command_status().await?,
     Some("console") => command_console(&args).await?,
+    Some("config") => command_config().await?,
     _ => command_help().await?,
   }
 
@@ -71,7 +72,7 @@ async fn command_serve(_args: &[String]) -> AppResult<()> {
   let ascii_project_name = include_str!("../../assets/ascii_project_name.txt");
   println!("{}", ascii_project_name);
 
-  let config = Config::load("config/default.toml")?;
+  let config = Config::load()?;
 
   logging::init(&config);
 
@@ -193,6 +194,14 @@ async fn command_console(args: &[String]) -> AppResult<()> {
   Ok(())
 }
 
+async fn command_config() -> AppResult<()> {
+  let config_path = get_storage_path("config.toml");
+
+  println!("Substrate config is located at {config_path}");
+
+  Ok(())
+}
+
 async fn command_help() -> AppResult<()> {
   println!(
     "
@@ -215,6 +224,8 @@ substrate [command] [options]
     --clear                              Clears the log file
 
   flush                                  Clears all Substrate belief data
+
+  config                                 Prints the path to where the Substrate config file exists
 "
   );
 
