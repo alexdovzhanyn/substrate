@@ -119,6 +119,12 @@ How you set up Substrate depends on whether you are using a released build or bu
 
 If you downloaded a release build, you do not need to install the Hugging Face CLI or manually download models. The release package includes everything Substrate needs to run locally.
 
+#### Install Via Homebrew
+```bash
+brew tap alexdovzhanyn/tap
+brew install substrate
+```
+
 Start the daemon:
 
 ```bash
